@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
+import Testimonials from "@/components/landing/Testimonials";
 import Pricing from "@/components/landing/Pricing";
 import Marketplace from "@/components/landing/Marketplace";
 import CTA from "@/components/landing/CTA";
@@ -35,6 +36,7 @@ const Index = () => {
         <main>
           <Hero />
           <Features />
+          <Testimonials />
           <Pricing />
           <Marketplace />
           <CTA />
