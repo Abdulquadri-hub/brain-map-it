@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Star, Users, MapPin } from "lucide-react";
 import SchoolModal, { School } from "./SchoolModal";
@@ -114,10 +115,12 @@ const Marketplace = () => {
               experience for you or your children.
             </p>
           </div>
-          <Button variant="outline" size="lg" className="self-start md:self-auto">
-            Browse All Schools
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+          <Link to="/marketplace">
+            <Button variant="outline" size="lg" className="self-start md:self-auto">
+              Browse All Schools
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
         </div>
 
         {/* Category Filters */}
