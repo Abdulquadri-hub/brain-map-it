@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Play, Quote, Star } from "lucide-react";
+import VideoModal from "./VideoModal";
 
 const videoTestimonials = [
   {
@@ -8,6 +9,7 @@ const videoTestimonials = [
     role: "Founder, Bright Stars Academy",
     location: "Lagos, Nigeria",
     thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop&crop=face",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1",
     quote: "Teach helped me scale from 20 students to over 400 in just 8 months. The platform handles everything so I can focus on teaching.",
     stats: { students: 450, revenue: "₦2.5M/month" },
   },
@@ -17,6 +19,7 @@ const videoTestimonials = [
     role: "CEO, Code Masters Academy",
     location: "Abuja, Nigeria",
     thumbnail: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=300&fit=crop&crop=face",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1",
     quote: "The multi-tenant architecture means I can manage 3 different academies from one dashboard. Game changer for my education business.",
     stats: { students: 1200, revenue: "₦5.2M/month" },
   },
@@ -26,6 +29,7 @@ const videoTestimonials = [
     role: "Director, Excel Learning Hub",
     location: "Accra, Ghana",
     thumbnail: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop&crop=face",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1",
     quote: "Finally, a platform built for African educators. Paystack integration works flawlessly, and my students love the mobile experience.",
     stats: { students: 680, revenue: "GH₵45K/month" },
   },
@@ -67,7 +71,7 @@ const successStories = [
 ];
 
 const Testimonials = () => {
-  const [activeVideo, setActiveVideo] = useState<number | null>(null);
+  const [activeVideo, setActiveVideo] = useState<typeof videoTestimonials[0] | null>(null);
 
   return (
     <section className="py-20 md:py-32 bg-background overflow-hidden">
@@ -96,7 +100,7 @@ const Testimonials = () => {
               {/* Video Thumbnail */}
               <div 
                 className="relative h-48 overflow-hidden cursor-pointer"
-                onClick={() => setActiveVideo(activeVideo === testimonial.id ? null : testimonial.id)}
+                onClick={() => setActiveVideo(testimonial)}
               >
                 <img
                   src={testimonial.thumbnail}
@@ -229,6 +233,14 @@ const Testimonials = () => {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      <VideoModal
+        isOpen={!!activeVideo}
+        onClose={() => setActiveVideo(null)}
+        videoUrl={activeVideo?.videoUrl || ""}
+        title={activeVideo?.name || ""}
+      />
     </section>
   );
 };
