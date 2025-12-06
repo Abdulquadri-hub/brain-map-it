@@ -21,6 +21,7 @@ interface AcademicStructureData {
 interface AcademicStructureStepProps {
   data: AcademicStructureData;
   onUpdate: (updates: Partial<AcademicStructureData>) => void;
+  errors?: { [key: string]: string | undefined };
 }
 
 const commonSubjects = [
@@ -49,10 +50,12 @@ const termSystems = [
   { value: "quarter", label: "Quarter (4 terms)" },
 ];
 
-const AcademicStructureStep = ({ data, onUpdate }: AcademicStructureStepProps) => {
+const AcademicStructureStep = ({ data, onUpdate, errors = {} }: AcademicStructureStepProps) => {
   const [newGradeName, setNewGradeName] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [newSubject, setNewSubject] = useState("");
+
+  const getError = (field: string) => errors[field];
 
   const addGrade = () => {
     if (!newGradeName.trim()) return;
@@ -110,7 +113,11 @@ const AcademicStructureStep = ({ data, onUpdate }: AcademicStructureStepProps) =
             placeholder="e.g., 2024/2025"
             value={data.academicYear}
             onChange={(e) => onUpdate({ academicYear: e.target.value })}
+            className={getError("academicYear") ? "border-destructive" : ""}
           />
+          {getError("academicYear") && (
+            <p className="text-sm text-destructive">{getError("academicYear")}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -119,7 +126,7 @@ const AcademicStructureStep = ({ data, onUpdate }: AcademicStructureStepProps) =
             value={data.termSystem}
             onValueChange={(value) => onUpdate({ termSystem: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger className={getError("termSystem") ? "border-destructive" : ""}>
               <SelectValue placeholder="Select term system" />
             </SelectTrigger>
             <SelectContent>
@@ -130,16 +137,22 @@ const AcademicStructureStep = ({ data, onUpdate }: AcademicStructureStepProps) =
               ))}
             </SelectContent>
           </Select>
+          {getError("termSystem") && (
+            <p className="text-sm text-destructive">{getError("termSystem")}</p>
+          )}
         </div>
       </div>
 
       {/* Grades Section */}
       <div className="space-y-4">
         <div>
-          <Label className="text-base font-semibold">Classes/Grades</Label>
+          <Label className="text-base font-semibold">Classes/Grades *</Label>
           <p className="text-sm text-muted-foreground">
             Add your school's classes or grade levels
           </p>
+          {getError("grades") && (
+            <p className="text-sm text-destructive mt-1">{getError("grades")}</p>
+          )}
         </div>
 
         {/* Add Grade */}

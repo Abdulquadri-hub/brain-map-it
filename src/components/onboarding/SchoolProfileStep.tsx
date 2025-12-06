@@ -21,6 +21,7 @@ interface SchoolProfileData {
 interface SchoolProfileStepProps {
   data: SchoolProfileData;
   onUpdate: (updates: Partial<SchoolProfileData>) => void;
+  errors?: { [key: string]: string | undefined };
 }
 
 const countries = [
@@ -44,7 +45,7 @@ const schoolTypes = [
   { value: "university", label: "University/College" },
 ];
 
-const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
+const SchoolProfileStep = ({ data, onUpdate, errors = {} }: SchoolProfileStepProps) => {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     onUpdate({ logo: file });
@@ -52,6 +53,8 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
     // TODO: For Laravel Inertia, you might want to upload immediately
     // or handle file uploads differently using Inertia's form helpers
   };
+
+  const getError = (field: string) => errors[field];
 
   return (
     <div className="space-y-6">
@@ -97,7 +100,11 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             placeholder="e.g., Lagos International Academy"
             value={data.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
+            className={getError("name") ? "border-destructive" : ""}
           />
+          {getError("name") && (
+            <p className="text-sm text-destructive">{getError("name")}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -106,7 +113,7 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             value={data.schoolType}
             onValueChange={(value) => onUpdate({ schoolType: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger className={getError("schoolType") ? "border-destructive" : ""}>
               <SelectValue placeholder="Select school type" />
             </SelectTrigger>
             <SelectContent>
@@ -117,6 +124,9 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
               ))}
             </SelectContent>
           </Select>
+          {getError("schoolType") && (
+            <p className="text-sm text-destructive">{getError("schoolType")}</p>
+          )}
         </div>
       </div>
 
@@ -129,7 +139,11 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             placeholder="info@school.edu"
             value={data.email}
             onChange={(e) => onUpdate({ email: e.target.value })}
+            className={getError("email") ? "border-destructive" : ""}
           />
+          {getError("email") && (
+            <p className="text-sm text-destructive">{getError("email")}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -140,7 +154,11 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             placeholder="+234 800 000 0000"
             value={data.phone}
             onChange={(e) => onUpdate({ phone: e.target.value })}
+            className={getError("phone") ? "border-destructive" : ""}
           />
+          {getError("phone") && (
+            <p className="text-sm text-destructive">{getError("phone")}</p>
+          )}
         </div>
       </div>
 
@@ -153,7 +171,11 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             placeholder="https://www.school.edu"
             value={data.website}
             onChange={(e) => onUpdate({ website: e.target.value })}
+            className={getError("website") ? "border-destructive" : ""}
           />
+          {getError("website") && (
+            <p className="text-sm text-destructive">{getError("website")}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -178,7 +200,11 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
           placeholder="123 Education Street"
           value={data.address}
           onChange={(e) => onUpdate({ address: e.target.value })}
+          className={getError("address") ? "border-destructive" : ""}
         />
+        {getError("address") && (
+          <p className="text-sm text-destructive">{getError("address")}</p>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -189,7 +215,11 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             placeholder="Lagos"
             value={data.city}
             onChange={(e) => onUpdate({ city: e.target.value })}
+            className={getError("city") ? "border-destructive" : ""}
           />
+          {getError("city") && (
+            <p className="text-sm text-destructive">{getError("city")}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -198,7 +228,7 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
             value={data.country}
             onValueChange={(value) => onUpdate({ country: value })}
           >
-            <SelectTrigger>
+            <SelectTrigger className={getError("country") ? "border-destructive" : ""}>
               <SelectValue placeholder="Select country" />
             </SelectTrigger>
             <SelectContent>
@@ -209,6 +239,9 @@ const SchoolProfileStep = ({ data, onUpdate }: SchoolProfileStepProps) => {
               ))}
             </SelectContent>
           </Select>
+          {getError("country") && (
+            <p className="text-sm text-destructive">{getError("country")}</p>
+          )}
         </div>
       </div>
 

@@ -17,6 +17,7 @@ interface PaymentData {
 interface PaymentSetupStepProps {
   data: PaymentData;
   onUpdate: (updates: Partial<PaymentData>) => void;
+  errors?: { [key: string]: string | undefined };
 }
 
 const currencies = [
@@ -47,13 +48,15 @@ const paymentMethodOptions = [
   { id: "cash", label: "Cash Payments", icon: Wallet },
 ];
 
-const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
+const PaymentSetupStep = ({ data, onUpdate, errors = {} }: PaymentSetupStepProps) => {
   const togglePaymentMethod = (methodId: string) => {
     const updated = data.paymentMethods.includes(methodId)
       ? data.paymentMethods.filter((m) => m !== methodId)
       : [...data.paymentMethods, methodId];
     onUpdate({ paymentMethods: updated });
   };
+
+  const getError = (field: string) => errors[field];
 
   const showBankDetails = data.paymentMethods.includes("bank_transfer");
   const showMobileMoneyDetails = data.paymentMethods.includes("mobile_money");
@@ -67,7 +70,7 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
           value={data.currency}
           onValueChange={(value) => onUpdate({ currency: value })}
         >
-          <SelectTrigger>
+          <SelectTrigger className={getError("currency") ? "border-destructive" : ""}>
             <SelectValue placeholder="Select currency" />
           </SelectTrigger>
           <SelectContent>
@@ -90,6 +93,9 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
           <p className="text-sm text-muted-foreground">
             Select all payment methods you want to accept
           </p>
+          {getError("paymentMethods") && (
+            <p className="text-sm text-destructive mt-1">{getError("paymentMethods")}</p>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-3">
@@ -135,7 +141,11 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
                 placeholder="e.g., First Bank"
                 value={data.bankName}
                 onChange={(e) => onUpdate({ bankName: e.target.value })}
+                className={getError("bankName") ? "border-destructive" : ""}
               />
+              {getError("bankName") && (
+                <p className="text-sm text-destructive">{getError("bankName")}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -145,7 +155,11 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
                 placeholder="0123456789"
                 value={data.accountNumber}
                 onChange={(e) => onUpdate({ accountNumber: e.target.value })}
+                className={getError("accountNumber") ? "border-destructive" : ""}
               />
+              {getError("accountNumber") && (
+                <p className="text-sm text-destructive">{getError("accountNumber")}</p>
+              )}
             </div>
           </div>
 
@@ -156,7 +170,11 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
               placeholder="School Account Name"
               value={data.accountName}
               onChange={(e) => onUpdate({ accountName: e.target.value })}
+              className={getError("accountName") ? "border-destructive" : ""}
             />
+            {getError("accountName") && (
+              <p className="text-sm text-destructive">{getError("accountName")}</p>
+            )}
           </div>
         </div>
       )}
@@ -176,7 +194,7 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
                 value={data.mobileMoneyProvider}
                 onValueChange={(value) => onUpdate({ mobileMoneyProvider: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className={getError("mobileMoneyProvider") ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
                 <SelectContent>
@@ -187,6 +205,9 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
                   ))}
                 </SelectContent>
               </Select>
+              {getError("mobileMoneyProvider") && (
+                <p className="text-sm text-destructive">{getError("mobileMoneyProvider")}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -197,7 +218,11 @@ const PaymentSetupStep = ({ data, onUpdate }: PaymentSetupStepProps) => {
                 placeholder="+234 800 000 0000"
                 value={data.mobileMoneyNumber}
                 onChange={(e) => onUpdate({ mobileMoneyNumber: e.target.value })}
+                className={getError("mobileMoneyNumber") ? "border-destructive" : ""}
               />
+              {getError("mobileMoneyNumber") && (
+                <p className="text-sm text-destructive">{getError("mobileMoneyNumber")}</p>
+              )}
             </div>
           </div>
         </div>
