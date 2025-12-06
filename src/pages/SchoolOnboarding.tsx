@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, School, BookOpen, Users, CreditCard, ArrowRight, ArrowLeft } from "lucide-react";
+import { Check, School, BookOpen, Users, CreditCard, ArrowRight, ArrowLeft, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 import SchoolProfileStep from "@/components/onboarding/SchoolProfileStep";
+import SubscriptionPlanStep from "@/components/onboarding/SubscriptionPlanStep";
 import AcademicStructureStep from "@/components/onboarding/AcademicStructureStep";
 import InstructorInvitesStep from "@/components/onboarding/InstructorInvitesStep";
 import PaymentSetupStep from "@/components/onboarding/PaymentSetupStep";
+import {
+  schoolProfileSchema,
+  subscriptionPlanSchema,
+  academicStructureSchema,
+  paymentSetupSchema,
+} from "@/lib/onboarding-schemas";
 
 const steps = [
   { id: 1, title: "School Profile", icon: School, description: "Basic information about your school" },
-  { id: 2, title: "Academic Structure", icon: BookOpen, description: "Set up classes, grades, and subjects" },
-  { id: 3, title: "Instructor Invites", icon: Users, description: "Invite teachers and staff" },
-  { id: 4, title: "Payment Setup", icon: CreditCard, description: "Configure payment methods" },
+  { id: 2, title: "Subscription Plan", icon: Crown, description: "Choose the right plan for your school" },
+  { id: 3, title: "Academic Structure", icon: BookOpen, description: "Set up classes, grades, and subjects" },
+  { id: 4, title: "Instructor Invites", icon: Users, description: "Invite teachers and staff" },
+  { id: 5, title: "Payment Setup", icon: CreditCard, description: "Configure payment methods" },
 ];
 
 export interface OnboardingData {
@@ -28,6 +37,10 @@ export interface OnboardingData {
     website: string;
     established: string;
     schoolType: string;
+  };
+  subscriptionPlan: {
+    planId: string;
+    billingCycle: "monthly" | "yearly";
   };
   academicStructure: {
     grades: { id: string; name: string; subjects: string[] }[];
@@ -52,6 +65,10 @@ export interface OnboardingData {
   };
 }
 
+interface StepErrors {
+  [key: string]: string | undefined;
+}
+
 const initialData: OnboardingData = {
   schoolProfile: {
     name: "",
@@ -65,6 +82,10 @@ const initialData: OnboardingData = {
     website: "",
     established: "",
     schoolType: "",
+  },
+  subscriptionPlan: {
+    planId: "",
+    billingCycle: "monthly",
   },
   academicStructure: {
     grades: [],
@@ -87,6 +108,7 @@ const SchoolOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<OnboardingData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<StepErrors>({});
 
   const progress = (currentStep / steps.length) * 100;
 
@@ -98,21 +120,71 @@ const SchoolOnboarding = () => {
       ...prev,
       [section]: { ...prev[section], ...updates },
     }));
+    // Clear errors when data changes
+    setErrors({});
+  };
+
+  const validateCurrentStep = (): boolean => {
+    let result;
+    
+    switch (currentStep) {
+      case 1:
+        result = schoolProfileSchema.safeParse(data.schoolProfile);
+        break;
+      case 2:
+        result = subscriptionPlanSchema.safeParse(data.subscriptionPlan);
+        break;
+      case 3:
+        result = academicStructureSchema.safeParse(data.academicStructure);
+        break;
+      case 4:
+        // Instructors step is optional - always valid
+        return true;
+      case 5:
+        result = paymentSetupSchema.safeParse(data.payment);
+        break;
+      default:
+        return true;
+    }
+
+    if (!result?.success) {
+      const newErrors: StepErrors = {};
+      result?.error.errors.forEach((err) => {
+        const path = err.path.join(".");
+        newErrors[path] = err.message;
+      });
+      setErrors(newErrors);
+      
+      // Show first error as toast
+      const firstError = result?.error.errors[0];
+      if (firstError) {
+        toast.error(firstError.message);
+      }
+      return false;
+    }
+
+    setErrors({});
+    return true;
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep((prev) => prev + 1);
+    if (validateCurrentStep()) {
+      if (currentStep < steps.length) {
+        setCurrentStep((prev) => prev + 1);
+      }
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
+      setErrors({});
     }
   };
 
   const handleSubmit = async () => {
+    if (!validateCurrentStep()) return;
+    
     setIsSubmitting(true);
     
     // TODO: Replace with Inertia.js form submission
@@ -129,8 +201,7 @@ const SchoolOnboarding = () => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     setIsSubmitting(false);
     
-    // Demo: Show success (replace with actual navigation)
-    alert("Onboarding complete! In production, this would redirect to dashboard.");
+    toast.success("Onboarding complete! Redirecting to dashboard...");
   };
 
   const renderStep = () => {
@@ -140,27 +211,38 @@ const SchoolOnboarding = () => {
           <SchoolProfileStep
             data={data.schoolProfile}
             onUpdate={(updates) => updateData("schoolProfile", updates)}
+            errors={errors}
           />
         );
       case 2:
         return (
-          <AcademicStructureStep
-            data={data.academicStructure}
-            onUpdate={(updates) => updateData("academicStructure", updates)}
+          <SubscriptionPlanStep
+            data={data.subscriptionPlan}
+            onUpdate={(updates) => updateData("subscriptionPlan", updates)}
+            errors={errors}
           />
         );
       case 3:
+        return (
+          <AcademicStructureStep
+            data={data.academicStructure}
+            onUpdate={(updates) => updateData("academicStructure", updates)}
+            errors={errors}
+          />
+        );
+      case 4:
         return (
           <InstructorInvitesStep
             data={data.instructors}
             onUpdate={(instructors) => setData((prev) => ({ ...prev, instructors }))}
           />
         );
-      case 4:
+      case 5:
         return (
           <PaymentSetupStep
             data={data.payment}
             onUpdate={(updates) => updateData("payment", updates)}
+            errors={errors}
           />
         );
       default:
@@ -182,7 +264,7 @@ const SchoolOnboarding = () => {
         </div>
 
         {/* Progress */}
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-5xl mx-auto mb-8">
           <Progress value={progress} className="h-2 mb-6" />
           
           <div className="flex justify-between">
@@ -199,7 +281,7 @@ const SchoolOnboarding = () => {
                   }`}
                 >
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 transition-all ${
                       isCompleted
                         ? "bg-primary border-primary text-primary-foreground"
                         : isCurrent
@@ -207,11 +289,11 @@ const SchoolOnboarding = () => {
                         : "border-muted bg-muted/50 text-muted-foreground"
                     }`}
                   >
-                    {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                    {isCompleted ? <Check className="w-4 h-4 md:w-5 md:h-5" /> : <Icon className="w-4 h-4 md:w-5 md:h-5" />}
                   </div>
                   <div className="hidden md:block text-center">
                     <p
-                      className={`text-sm font-medium ${
+                      className={`text-xs font-medium ${
                         isCurrent ? "text-primary" : "text-muted-foreground"
                       }`}
                     >
