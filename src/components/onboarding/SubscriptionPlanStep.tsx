@@ -1,4 +1,4 @@
-import { Check, Sparkles, Building2, Rocket } from "lucide-react";
+import { Check, Sparkles, Building2, Rocket, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,24 @@ interface SubscriptionPlanStepProps {
 }
 
 const plans = [
+  {
+    id: "free",
+    name: "Free",
+    description: "Get started with basic features",
+    icon: Gift,
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    features: [
+      "Up to 25 students",
+      "1 instructor",
+      "Basic gradebook",
+      "Community support",
+    ],
+    limits: {
+      students: 25,
+      instructors: 1,
+    },
+  },
   {
     id: "starter",
     name: "Starter",
@@ -110,17 +128,18 @@ const SubscriptionPlanStep = ({ data, onUpdate, errors }: SubscriptionPlanStepPr
       </div>
 
       {/* Plan Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {plans.map((plan) => {
           const Icon = plan.icon;
           const isSelected = data.planId === plan.id;
           const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
           const period = isYearly ? "/year" : "/month";
+          const isFree = plan.id === "free";
 
           return (
             <div
               key={plan.id}
-              className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all ${
+              className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all hover:scale-[1.02] ${
                 isSelected
                   ? "border-primary bg-primary/5 shadow-lg"
                   : "border-border hover:border-primary/50"
@@ -135,34 +154,45 @@ const SubscriptionPlanStep = ({ data, onUpdate, errors }: SubscriptionPlanStepPr
 
               <div className="text-center mb-4">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${
                     isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
                   }`}
                 >
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                <h3 className="text-lg font-bold">{plan.name}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{plan.description}</p>
               </div>
 
-              <div className="text-center mb-6">
-                <span className="text-4xl font-bold">${price}</span>
-                <span className="text-muted-foreground">{period}</span>
+              <div className="text-center mb-4">
+                {isFree ? (
+                  <span className="text-3xl font-bold">Free</span>
+                ) : (
+                  <>
+                    <span className="text-3xl font-bold">${price}</span>
+                    <span className="text-muted-foreground text-sm">{period}</span>
+                  </>
+                )}
               </div>
 
-              <ul className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <ul className="space-y-2">
+                {plan.features.slice(0, 4).map((feature, index) => (
+                  <li key={index} className="flex items-start gap-2 text-xs">
+                    <Check className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
                     <span>{feature}</span>
                   </li>
                 ))}
+                {plan.features.length > 4 && (
+                  <li className="text-xs text-muted-foreground text-center">
+                    +{plan.features.length - 4} more features
+                  </li>
+                )}
               </ul>
 
               {isSelected && (
-                <div className="absolute top-4 right-4">
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-4 h-4 text-primary-foreground" />
+                <div className="absolute top-3 right-3">
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 </div>
               )}
@@ -188,14 +218,20 @@ const SubscriptionPlanStep = ({ data, onUpdate, errors }: SubscriptionPlanStepPr
               </p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold">
-                ${isYearly
-                  ? plans.find((p) => p.id === data.planId)?.yearlyPrice
-                  : plans.find((p) => p.id === data.planId)?.monthlyPrice}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {isYearly ? "per year" : "per month"}
-              </p>
+              {data.planId === "free" ? (
+                <p className="text-2xl font-bold">Free</p>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold">
+                    ${isYearly
+                      ? plans.find((p) => p.id === data.planId)?.yearlyPrice
+                      : plans.find((p) => p.id === data.planId)?.monthlyPrice}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {isYearly ? "per year" : "per month"}
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -203,7 +239,7 @@ const SubscriptionPlanStep = ({ data, onUpdate, errors }: SubscriptionPlanStepPr
 
       {/* Trial Note */}
       <div className="text-center text-sm text-muted-foreground">
-        <p>All plans include a 14-day free trial. No credit card required to start.</p>
+        <p>All paid plans include a 14-day free trial. No credit card required to start.</p>
       </div>
     </div>
   );
