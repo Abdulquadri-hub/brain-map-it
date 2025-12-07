@@ -1,27 +1,26 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, School, BookOpen, Users, CreditCard, ArrowRight, ArrowLeft, Crown } from "lucide-react";
+import { Check, School, CreditCard, ArrowRight, ArrowLeft, Crown, ClipboardCheck, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import SchoolProfileStep from "@/components/onboarding/SchoolProfileStep";
 import SubscriptionPlanStep from "@/components/onboarding/SubscriptionPlanStep";
-import AcademicStructureStep from "@/components/onboarding/AcademicStructureStep";
-import InstructorInvitesStep from "@/components/onboarding/InstructorInvitesStep";
 import PaymentSetupStep from "@/components/onboarding/PaymentSetupStep";
+import ReviewStep from "@/components/onboarding/ReviewStep";
+import ProcessingStep from "@/components/onboarding/ProcessingStep";
 import {
   schoolProfileSchema,
   subscriptionPlanSchema,
-  academicStructureSchema,
   paymentSetupSchema,
 } from "@/lib/onboarding-schemas";
 
 const steps = [
   { id: 1, title: "School Profile", icon: School, description: "Basic information about your school" },
-  { id: 2, title: "Subscription Plan", icon: Crown, description: "Choose the right plan for your school" },
-  { id: 3, title: "Academic Structure", icon: BookOpen, description: "Set up classes, grades, and subjects" },
-  { id: 4, title: "Instructor Invites", icon: Users, description: "Invite teachers and staff" },
-  { id: 5, title: "Payment Setup", icon: CreditCard, description: "Configure payment methods" },
+  { id: 2, title: "Select Plan", icon: Crown, description: "Choose the right plan for your school" },
+  { id: 3, title: "Payment", icon: CreditCard, description: "Set up your payment method" },
+  { id: 4, title: "Review", icon: ClipboardCheck, description: "Review and confirm your information" },
+  { id: 5, title: "Setup", icon: Rocket, description: "Creating your school platform" },
 ];
 
 export interface OnboardingData {
@@ -42,26 +41,15 @@ export interface OnboardingData {
     planId: string;
     billingCycle: "monthly" | "yearly";
   };
-  academicStructure: {
-    grades: { id: string; name: string; subjects: string[] }[];
-    academicYear: string;
-    termSystem: string;
-  };
-  instructors: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    subjects: string[];
-  }[];
   payment: {
-    currency: string;
-    paymentMethods: string[];
+    paymentMethod: string;
+    cardNumber: string;
+    cardExpiry: string;
+    cardCvv: string;
+    cardName: string;
     bankName: string;
     accountNumber: string;
     accountName: string;
-    mobileMoneyProvider: string;
-    mobileMoneyNumber: string;
   };
 }
 
@@ -87,30 +75,26 @@ const initialData: OnboardingData = {
     planId: "",
     billingCycle: "monthly",
   },
-  academicStructure: {
-    grades: [],
-    academicYear: "",
-    termSystem: "trimester",
-  },
-  instructors: [],
   payment: {
-    currency: "NGN",
-    paymentMethods: [],
+    paymentMethod: "",
+    cardNumber: "",
+    cardExpiry: "",
+    cardCvv: "",
+    cardName: "",
     bankName: "",
     accountNumber: "",
     accountName: "",
-    mobileMoneyProvider: "",
-    mobileMoneyNumber: "",
   },
 };
 
 const SchoolOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<OnboardingData>(initialData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<StepErrors>({});
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const progress = (currentStep / steps.length) * 100;
+  const isFreeplan = data.subscriptionPlan.planId === "free";
 
   const updateData = <K extends keyof OnboardingData>(
     section: K,
@@ -120,7 +104,6 @@ const SchoolOnboarding = () => {
       ...prev,
       [section]: { ...prev[section], ...updates },
     }));
-    // Clear errors when data changes
     setErrors({});
   };
 
@@ -135,14 +118,13 @@ const SchoolOnboarding = () => {
         result = subscriptionPlanSchema.safeParse(data.subscriptionPlan);
         break;
       case 3:
-        result = academicStructureSchema.safeParse(data.academicStructure);
-        break;
-      case 4:
-        // Instructors step is optional - always valid
-        return true;
-      case 5:
+        // Skip payment validation for free plan
+        if (isFreeplan) return true;
         result = paymentSetupSchema.safeParse(data.payment);
         break;
+      case 4:
+        // Review step - no validation needed
+        return true;
       default:
         return true;
     }
@@ -155,7 +137,6 @@ const SchoolOnboarding = () => {
       });
       setErrors(newErrors);
       
-      // Show first error as toast
       const firstError = result?.error.errors[0];
       if (firstError) {
         toast.error(firstError.message);
@@ -169,6 +150,19 @@ const SchoolOnboarding = () => {
 
   const handleNext = () => {
     if (validateCurrentStep()) {
+      // Mark current step as completed
+      if (!completedSteps.includes(currentStep)) {
+        setCompletedSteps((prev) => [...prev, currentStep]);
+      }
+
+      // Skip payment step for free plan
+      if (currentStep === 2 && isFreeplan) {
+        // Set payment method to "none" for free plans
+        updateData("payment", { paymentMethod: "none" });
+        setCurrentStep(4); // Skip to review
+        return;
+      }
+
       if (currentStep < steps.length) {
         setCurrentStep((prev) => prev + 1);
       }
@@ -176,32 +170,47 @@ const SchoolOnboarding = () => {
   };
 
   const handlePrevious = () => {
+    // From review, go back to payment (or plan selection if free)
+    if (currentStep === 4 && isFreeplan) {
+      setCurrentStep(2);
+      return;
+    }
+
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
       setErrors({});
     }
   };
 
-  const handleSubmit = async () => {
-    if (!validateCurrentStep()) return;
-    
-    setIsSubmitting(true);
-    
-    // TODO: Replace with Inertia.js form submission
-    // Example Laravel Inertia integration:
-    // import { router } from '@inertiajs/react';
-    // router.post('/school/onboarding', data, {
-    //   onSuccess: () => { /* redirect to dashboard */ },
-    //   onError: (errors) => { /* handle validation errors */ },
-    // });
-    
-    console.log("Onboarding data to submit:", data);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    
-    toast.success("Onboarding complete! Redirecting to dashboard...");
+  const handleStepClick = (stepId: number) => {
+    // Only allow clicking on completed steps
+    if (completedSteps.includes(stepId) && stepId < currentStep) {
+      setCurrentStep(stepId);
+    }
+  };
+
+  const handleEditStep = (stepId: number) => {
+    setCurrentStep(stepId);
+  };
+
+  const handleCompleteSetup = () => {
+    if (validateCurrentStep()) {
+      if (!completedSteps.includes(currentStep)) {
+        setCompletedSteps((prev) => [...prev, currentStep]);
+      }
+      setCurrentStep(5);
+    }
+  };
+
+  const handleProcessingComplete = () => {
+    // TODO: Replace with Inertia.js navigation
+    // router.visit('/dashboard');
+    toast.success("Redirecting to dashboard...");
+    console.log("Navigate to dashboard");
+  };
+
+  const handleRetry = () => {
+    setCurrentStep(4); // Go back to review
   };
 
   const renderStep = () => {
@@ -224,31 +233,35 @@ const SchoolOnboarding = () => {
         );
       case 3:
         return (
-          <AcademicStructureStep
-            data={data.academicStructure}
-            onUpdate={(updates) => updateData("academicStructure", updates)}
+          <PaymentSetupStep
+            data={data.payment}
+            planInfo={data.subscriptionPlan}
+            onUpdate={(updates) => updateData("payment", updates)}
             errors={errors}
           />
         );
       case 4:
         return (
-          <InstructorInvitesStep
-            data={data.instructors}
-            onUpdate={(instructors) => setData((prev) => ({ ...prev, instructors }))}
+          <ReviewStep
+            data={data}
+            onEditStep={handleEditStep}
           />
         );
       case 5:
         return (
-          <PaymentSetupStep
-            data={data.payment}
-            onUpdate={(updates) => updateData("payment", updates)}
-            errors={errors}
+          <ProcessingStep
+            schoolName={data.schoolProfile.name}
+            onComplete={handleProcessingComplete}
+            onRetry={handleRetry}
           />
         );
       default:
         return null;
     }
   };
+
+  // Don't show navigation for processing step
+  const showNavigation = currentStep < 5;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -270,15 +283,17 @@ const SchoolOnboarding = () => {
           <div className="flex justify-between">
             {steps.map((step) => {
               const Icon = step.icon;
-              const isCompleted = currentStep > step.id;
+              const isCompleted = completedSteps.includes(step.id) || currentStep > step.id;
               const isCurrent = currentStep === step.id;
+              const isClickable = completedSteps.includes(step.id) && step.id < currentStep;
               
               return (
                 <div
                   key={step.id}
                   className={`flex flex-col items-center gap-2 transition-all ${
                     isCurrent ? "scale-105" : ""
-                  }`}
+                  } ${isClickable ? "cursor-pointer" : ""}`}
+                  onClick={() => handleStepClick(step.id)}
                 >
                   <div
                     className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -289,7 +304,11 @@ const SchoolOnboarding = () => {
                         : "border-muted bg-muted/50 text-muted-foreground"
                     }`}
                   >
-                    {isCompleted ? <Check className="w-4 h-4 md:w-5 md:h-5" /> : <Icon className="w-4 h-4 md:w-5 md:h-5" />}
+                    {isCompleted && !isCurrent ? (
+                      <Check className="w-4 h-4 md:w-5 md:h-5" />
+                    ) : (
+                      <Icon className="w-4 h-4 md:w-5 md:h-5" />
+                    )}
                   </div>
                   <div className="hidden md:block text-center">
                     <p
@@ -309,14 +328,16 @@ const SchoolOnboarding = () => {
         {/* Step Content */}
         <div className="max-w-4xl mx-auto">
           <div className="bg-card rounded-2xl border shadow-lg p-6 md:p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                {steps[currentStep - 1].title}
-              </h2>
-              <p className="text-muted-foreground">
-                {steps[currentStep - 1].description}
-              </p>
-            </div>
+            {currentStep < 5 && (
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {steps[currentStep - 1].title}
+                </h2>
+                <p className="text-muted-foreground">
+                  {steps[currentStep - 1].description}
+                </p>
+              </div>
+            )}
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -331,33 +352,34 @@ const SchoolOnboarding = () => {
             </AnimatePresence>
 
             {/* Navigation */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-                className="gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Previous
-              </Button>
-
-              {currentStep === steps.length ? (
+            {showNavigation && (
+              <div className="flex justify-between mt-8 pt-6 border-t">
                 <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="gap-2 bg-primary hover:bg-primary/90"
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                  className="gap-2"
                 >
-                  {isSubmitting ? "Submitting..." : "Complete Setup"}
-                  <Check className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4" />
+                  Previous
                 </Button>
-              ) : (
-                <Button onClick={handleNext} className="gap-2">
-                  Next Step
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+
+                {currentStep === 4 ? (
+                  <Button
+                    onClick={handleCompleteSetup}
+                    className="gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    Complete Setup
+                    <Check className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={handleNext} className="gap-2">
+                    Next Step
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
