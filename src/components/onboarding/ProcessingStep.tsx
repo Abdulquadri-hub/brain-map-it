@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, AlertCircle, Rocket, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ interface SetupStep {
 }
 
 const ProcessingStep = ({ schoolName, onComplete, onRetry }: ProcessingStepProps) => {
+  const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"processing" | "success" | "error">("processing");
   const [currentMessage, setCurrentMessage] = useState("Starting setup process...");
@@ -262,7 +264,7 @@ const ProcessingStep = ({ schoolName, onComplete, onRetry }: ProcessingStepProps
           </div>
 
           <Button
-            onClick={onComplete}
+            onClick={() => navigate("/dashboard")}
             className="w-full gap-2"
             size="lg"
           >
