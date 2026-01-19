@@ -18,6 +18,10 @@ import SettingsPage from "./pages/dashboard/SettingsPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import SchoolSelectorPage from "./pages/auth/SchoolSelectorPage";
+import SchoolPublicPage from "./pages/school/SchoolPublicPage";
+import CourseDetailPage from "./pages/school/CourseDetailPage";
+import EnrollmentPage from "./pages/enrollment/EnrollmentPage";
+import EnrollmentRequestsPage from "./pages/dashboard/EnrollmentRequestsPage";
 import NotFound from "./pages/NotFound";
 
 // Laravel Inertia.js Integration:
@@ -60,9 +64,15 @@ const App = () => (
                 <Route path="students" element={<StudentsPage />} />
                 <Route path="courses" element={<CoursesPage />} />
                 <Route path="instructors" element={<InstructorsPage />} />
+                <Route path="enrollments" element={<EnrollmentRequestsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
+              
+              {/* Public School Routes */}
+              <Route path="/school/:slug" element={<SchoolPublicPage />} />
+              <Route path="/school/:slug/course/:courseId" element={<CourseDetailPage />} />
+              <Route path="/school/:slug/enroll" element={<EnrollmentPage />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
