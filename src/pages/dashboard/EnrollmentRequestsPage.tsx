@@ -41,7 +41,8 @@ import {
   BookOpen,
   User,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+// DashboardLayout is provided by the router - no need to import here
+// import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 // Laravel Inertia.js Integration:
 // import { usePage, router } from '@inertiajs/react'
@@ -234,18 +235,17 @@ const EnrollmentRequestsPage = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold">Enrollment Requests</h1>
-          <p className="text-muted-foreground">
-            Review and manage student enrollment requests
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Enrollment Requests</h1>
+        <p className="text-muted-foreground">
+          Review and manage student enrollment requests
+        </p>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -414,7 +414,6 @@ const EnrollmentRequestsPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
@@ -588,7 +587,7 @@ const EnrollmentRequestsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </div>
   );
 };
 

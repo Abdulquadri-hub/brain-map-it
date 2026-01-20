@@ -47,13 +47,13 @@ const adultSchema = z.object({
 type AdultFormData = z.infer<typeof adultSchema>;
 
 interface AdultRegistrationStepProps {
-  data?: {
+  data?: Partial<{
     name: string;
     email: string;
     phone: string;
     dateOfBirth: string;
     password: string;
-  };
+  }>;
   onUpdate: (data: AdultFormData) => void;
 }
 
