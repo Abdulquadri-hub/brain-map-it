@@ -39,12 +39,12 @@ const childSchema = z.object({
 type ChildFormData = z.infer<typeof childSchema>;
 
 interface ChildRegistrationStepProps {
-  data?: {
+  data?: Partial<{
     name: string;
     dateOfBirth: string;
     gender: string;
     grade: string;
-  };
+  }>;
   onUpdate: (data: ChildFormData) => void;
 }
 

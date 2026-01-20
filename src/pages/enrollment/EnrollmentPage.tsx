@@ -27,31 +27,43 @@ import EnrollmentSuccessStep from "@/components/enrollment/EnrollmentSuccessStep
 //   onError: (errors) => setErrors(errors)
 // })
 
+interface ParentData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword?: string;
+}
+
+interface ChildData {
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  grade: string;
+}
+
+interface AdultData {
+  name: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  password: string;
+  confirmPassword?: string;
+}
+
 export interface EnrollmentData {
   enrollmentType: "adult" | "parent" | null;
-  parent?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
-  };
-  child?: {
-    name?: string;
-    dateOfBirth?: string;
-    gender?: string;
-    grade?: string;
-  };
-  adult?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    dateOfBirth?: string;
-    password?: string;
-  };
+  parent?: Partial<ParentData>;
+  child?: Partial<ChildData>;
+  adult?: Partial<AdultData>;
   selectedCourses: string[];
   paymentMethod: string;
   paymentReference?: string;
 }
+
+const defaultParent: ParentData = { name: "", email: "", phone: "", password: "" };
+const defaultChild: ChildData = { name: "", dateOfBirth: "", gender: "", grade: "" };
+const defaultAdult: AdultData = { name: "", email: "", phone: "", dateOfBirth: "", password: "" };
 
 const steps = [
   { id: "type", label: "Account Type" },
