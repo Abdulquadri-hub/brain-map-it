@@ -12,6 +12,7 @@ import DashboardLayout from "./components/dashboard/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import StudentsPage from "./pages/dashboard/StudentsPage";
 import CoursesPage from "./pages/dashboard/CoursesPage";
+import CourseBuilderPage from "./pages/dashboard/CourseBuilderPage";
 import InstructorsPage from "./pages/dashboard/InstructorsPage";
 import ReportsPage from "./pages/dashboard/ReportsPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
@@ -22,6 +23,8 @@ import SchoolPublicPage from "./pages/school/SchoolPublicPage";
 import CourseDetailPage from "./pages/school/CourseDetailPage";
 import EnrollmentPage from "./pages/enrollment/EnrollmentPage";
 import EnrollmentRequestsPage from "./pages/dashboard/EnrollmentRequestsPage";
+import CourseLearningPage from "./pages/learn/CourseLearningPage";
+import MyCoursesPage from "./pages/learn/MyCoursesPage";
 import NotFound from "./pages/NotFound";
 
 // Laravel Inertia.js Integration:
@@ -63,11 +66,17 @@ const App = () => (
                 <Route index element={<DashboardHome />} />
                 <Route path="students" element={<StudentsPage />} />
                 <Route path="courses" element={<CoursesPage />} />
+                <Route path="courses/:courseId/edit" element={<CourseBuilderPage />} />
+                <Route path="courses/new" element={<CourseBuilderPage />} />
                 <Route path="instructors" element={<InstructorsPage />} />
                 <Route path="enrollments" element={<EnrollmentRequestsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
+              
+              {/* Student Learning Routes */}
+              <Route path="/my-courses" element={<MyCoursesPage />} />
+              <Route path="/learn/:courseId/lesson/:lessonId" element={<CourseLearningPage />} />
               
               {/* Public School Routes */}
               <Route path="/school/:slug" element={<SchoolPublicPage />} />
