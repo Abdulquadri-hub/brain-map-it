@@ -160,7 +160,7 @@ const EnrollmentPage = () => {
           return (
             <div className="space-y-6">
               <ParentRegistrationStep
-                data={enrollmentData.parent}
+                data={enrollmentData.parent || { name: "", email: "", phone: "", password: "" }}
                 onUpdate={(parent) => updateEnrollmentData({ parent })}
                 onNext={() => {
                   // After parent, go to child registration
@@ -168,7 +168,7 @@ const EnrollmentPage = () => {
               />
               {enrollmentData.parent && (
                 <ChildRegistrationStep
-                  data={enrollmentData.child}
+                  data={enrollmentData.child || { name: "", dateOfBirth: "", gender: "", grade: "" }}
                   onUpdate={(child) => updateEnrollmentData({ child })}
                 />
               )}
@@ -189,7 +189,7 @@ const EnrollmentPage = () => {
           return (
             <div className="space-y-6">
               <AdultRegistrationStep
-                data={enrollmentData.adult}
+                data={enrollmentData.adult || { name: "", email: "", phone: "", dateOfBirth: "", password: "" }}
                 onUpdate={(adult) => updateEnrollmentData({ adult })}
               />
               <div className="flex justify-between">
