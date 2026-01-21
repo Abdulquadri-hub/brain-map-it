@@ -11,6 +11,7 @@ import {
   Users,
   ImageIcon,
   Upload,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import ModuleEditor from "@/components/courses/ModuleEditor";
-import type { Course, Module, CourseStatus } from "@/types/course";
+import LearningTypeSelector from "@/components/courses/LearningTypeSelector";
+import LiveSessionPlanner from "@/components/courses/LiveSessionPlanner";
+import type { Course, Module, CourseStatus, LearningType, CoursePricing, LiveSessionConfig, WhatsAppConfig } from "@/types/course";
 
 // Laravel Inertia.js Integration:
 // import { usePage, router } from '@inertiajs/react'
@@ -80,6 +83,18 @@ const CourseBuilderPage = () => {
     price: isNewCourse ? 0 : 25000,
     duration: isNewCourse ? "" : "12 weeks",
     status: "draft",
+    learningType: isNewCourse ? "hybrid" : "hybrid",
+    allowsStudentChoice: true,
+    pricing: isNewCourse 
+      ? { selfPacedPrice: 15000, liveClassPrice: 25000 }
+      : { selfPacedPrice: 15000, liveClassPrice: 25000 },
+    liveSession: isNewCourse ? undefined : {
+      platform: "google_meet",
+      schedule: [{ dayOfWeek: "Saturday", time: "10:00", duration: 60 }],
+      autoGenerateLink: true,
+      recordSessions: true,
+    },
+    whatsApp: { enabled: true, groupLink: "", accessType: "live_only" },
     instructor: isNewCourse ? undefined : {
       id: "1",
       name: "Dr. James Wilson",
@@ -178,10 +193,43 @@ const CourseBuilderPage = () => {
     setCourse({ ...course, modules });
   };
 
+  const handleLearningTypeChange = (learningType: LearningType) => {
+    setCourse({ ...course, learningType });
+  };
+
+  const handlePricingChange = (pricing: CoursePricing) => {
+    setCourse({ ...course, pricing });
+  };
+
+  const handleAllowsChoiceChange = (allowsStudentChoice: boolean) => {
+    setCourse({ ...course, allowsStudentChoice });
+  };
+
+  const handleLiveSessionChange = (liveSession: LiveSessionConfig) => {
+    setCourse({ ...course, liveSession });
+  };
+
+  const handleWhatsAppChange = (whatsApp: WhatsAppConfig) => {
+    setCourse({ ...course, whatsApp });
+  };
+
   const totalLessons = (course.modules || []).reduce(
     (acc, m) => acc + m.lessons.length,
     0
   );
+
+  const getLearningTypeBadge = () => {
+    switch (course.learningType) {
+      case "self_paced":
+        return <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">Self-Paced</Badge>;
+      case "live_classes":
+        return <Badge variant="secondary" className="bg-green-500/10 text-green-600">Live Classes</Badge>;
+      case "hybrid":
+        return <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">Hybrid</Badge>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -203,6 +251,7 @@ const CourseBuilderPage = () => {
                 >
                   {course.status}
                 </Badge>
+                {getLearningTypeBadge()}
               </div>
               <p className="text-sm text-muted-foreground">
                 {totalLessons} lessons • {(course.modules || []).length} modules
@@ -251,6 +300,10 @@ const CourseBuilderPage = () => {
             <TabsTrigger value="details" className="gap-2">
               <Settings className="h-4 w-4" />
               Course Details
+            </TabsTrigger>
+            <TabsTrigger value="learning-type" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              Learning Type
             </TabsTrigger>
             <TabsTrigger value="curriculum" className="gap-2">
               <BookOpen className="h-4 w-4" />
@@ -478,37 +531,47 @@ const CourseBuilderPage = () => {
                   </CardContent>
                 </Card>
 
-                {/* Pricing */}
+                {/* Pricing Summary */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Pricing</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Price (₦)</Label>
-                      <Input
-                        type="number"
-                        value={course.price || ""}
-                        onChange={(e) =>
-                          setCourse({ ...course, price: Number(e.target.value) })
-                        }
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Free Course</Label>
-                        <p className="text-xs text-muted-foreground">
-                          Make this course free for everyone
-                        </p>
+                  <CardContent className="space-y-3">
+                    {course.learningType === "self_paced" && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Self-Paced</span>
+                        <span className="font-medium">
+                          ₦{(course.pricing?.selfPacedPrice || 0).toLocaleString()}
+                        </span>
                       </div>
-                      <Switch
-                        checked={course.price === 0}
-                        onCheckedChange={(checked) =>
-                          setCourse({ ...course, price: checked ? 0 : 5000 })
-                        }
-                      />
-                    </div>
+                    )}
+                    {course.learningType === "live_classes" && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Live Classes</span>
+                        <span className="font-medium">
+                          ₦{(course.pricing?.liveClassPrice || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {course.learningType === "hybrid" && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Self-Paced</span>
+                          <span className="font-medium">
+                            ₦{(course.pricing?.selfPacedPrice || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Live Classes</span>
+                          <span className="font-medium">
+                            ₦{(course.pricing?.liveClassPrice || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <p className="text-xs text-muted-foreground pt-2">
+                      Configure pricing in the Learning Type tab
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -535,6 +598,37 @@ const CourseBuilderPage = () => {
                   </Card>
                 )}
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Learning Type Tab - NEW */}
+          <TabsContent value="learning-type" className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold">Learning Experience</h2>
+              <p className="text-muted-foreground">
+                Choose how students will experience your course
+              </p>
+            </div>
+
+            <LearningTypeSelector
+              selectedType={course.learningType || "hybrid"}
+              onTypeChange={handleLearningTypeChange}
+              pricing={course.pricing || { selfPacedPrice: 0, liveClassPrice: 0 }}
+              onPricingChange={handlePricingChange}
+              allowsStudentChoice={course.allowsStudentChoice || false}
+              onAllowsChoiceChange={handleAllowsChoiceChange}
+            />
+
+            {/* Live Session Planner - only for live_classes or hybrid */}
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold mb-4">Live Session Configuration</h3>
+              <LiveSessionPlanner
+                config={course.liveSession}
+                onConfigChange={handleLiveSessionChange}
+                whatsApp={course.whatsApp}
+                onWhatsAppChange={handleWhatsAppChange}
+                disabled={course.learningType === "self_paced"}
+              />
             </div>
           </TabsContent>
 
