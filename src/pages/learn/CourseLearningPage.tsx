@@ -56,6 +56,9 @@ const mockCourse: Course = {
   duration: "12 weeks",
   enrolledCount: 45,
   status: "active",
+  learningType: "hybrid",
+  allowsStudentChoice: true,
+  pricing: { selfPacedPrice: 15000, liveClassPrice: 25000 },
   instructor: {
     id: "1",
     name: "Dr. Adaora Nwosu",
