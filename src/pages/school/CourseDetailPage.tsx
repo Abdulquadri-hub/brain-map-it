@@ -15,6 +15,9 @@ import {
   FileText,
   CheckCircle,
   Calendar,
+  Video,
+  Zap,
+  MessageCircle,
 } from "lucide-react";
 
 // Laravel Inertia.js Integration:
@@ -48,7 +51,11 @@ const mockCourse = {
   id: "1",
   title: "Advanced Mathematics",
   description: "Master calculus, algebra, and geometry with practical applications. This comprehensive course covers everything from basic principles to advanced problem-solving techniques used in real-world scenarios.",
-  price: 25000,
+  learningType: "hybrid" as const,
+  pricing: {
+    selfPacedPrice: 15000,
+    liveClassPrice: 25000,
+  },
   duration: "12 weeks",
   level: "Advanced",
   enrolledCount: 45,
@@ -78,6 +85,11 @@ const mockCourse = {
     startDate: "2024-02-01",
     endDate: "2024-04-26",
     classTime: "Saturdays, 10:00 AM - 12:00 PM",
+  },
+  liveSession: {
+    platform: "google_meet" as const,
+    dayOfWeek: "saturday",
+    time: "10:00",
   },
 };
 
@@ -294,21 +306,97 @@ const CourseDetailPage = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
               {/* Enrollment Card */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-3xl font-bold mb-4">
-                    ₦{course.price.toLocaleString()}
+              <Card className="overflow-hidden">
+                {course.learningType === "hybrid" && (
+                  <div className="bg-primary/10 px-4 py-2 text-center">
+                    <Badge variant="outline" className="border-primary text-primary">
+                      <Zap className="h-3 w-3 mr-1" />
+                      Flexible Learning
+                    </Badge>
                   </div>
-                  <Button className="w-full mb-4" size="lg" asChild>
-                    <Link to={`/school/${slug}/enroll?course=${courseId}`}>
-                      Enroll Now
-                    </Link>
-                  </Button>
-                  <p className="text-center text-sm text-muted-foreground">
+                )}
+                <CardContent className="pt-6">
+                  {course.learningType === "hybrid" ? (
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-sm text-muted-foreground">Starting from</div>
+                        <div className="text-3xl font-bold">
+                          ₦{course.pricing.selfPacedPrice.toLocaleString()}
+                        </div>
+                      </div>
+                      
+                      {/* Learning Options Preview */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">Self-Paced</span>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            ₦{course.pricing.selfPacedPrice.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-primary/20">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium">Live Classes</span>
+                            <Badge variant="secondary" className="text-xs">Popular</Badge>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            ₦{course.pricing.liveClassPrice.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <Button className="w-full" size="lg" asChild>
+                        <Link to={`/school/${slug}/enroll?course=${courseId}`}>
+                          View Options & Enroll
+                        </Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold mb-4">
+                        ₦{(course.pricing.selfPacedPrice || course.pricing.liveClassPrice).toLocaleString()}
+                      </div>
+                      <Button className="w-full mb-4" size="lg" asChild>
+                        <Link to={`/school/${slug}/enroll?course=${courseId}`}>
+                          Enroll Now
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                  <p className="text-center text-sm text-muted-foreground mt-4">
                     30-day money-back guarantee
                   </p>
                 </CardContent>
               </Card>
+
+              {/* Live Sessions Info (for hybrid/live courses) */}
+              {(course.learningType === "hybrid" || course.learningType === "live_classes") && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Video className="h-5 w-5 text-primary" />
+                      Live Classes Include
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>Weekly live sessions</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                      <span>WhatsApp study group</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Real-time Q&A with instructor</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Schedule */}
               <Card>

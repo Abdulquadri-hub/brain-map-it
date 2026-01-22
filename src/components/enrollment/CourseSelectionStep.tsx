@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, Zap } from "lucide-react";
 
 // Laravel Inertia.js Integration:
 // import { usePage } from '@inertiajs/react'
@@ -16,6 +16,9 @@ interface Course {
   title: string;
   description: string;
   price: number;
+  selfPacedPrice?: number;
+  liveClassPrice?: number;
+  learningType: "self_paced" | "live_classes" | "hybrid";
   duration: string;
   level: string;
   enrolledCount: number;
@@ -28,6 +31,9 @@ const mockCourses: Course[] = [
     title: "Advanced Mathematics",
     description: "Master calculus, algebra, and geometry with practical applications",
     price: 25000,
+    selfPacedPrice: 15000,
+    liveClassPrice: 25000,
+    learningType: "hybrid",
     duration: "12 weeks",
     level: "Advanced",
     enrolledCount: 45,
@@ -38,6 +44,9 @@ const mockCourses: Course[] = [
     title: "English Language & Literature",
     description: "Improve your English proficiency with comprehensive lessons",
     price: 20000,
+    selfPacedPrice: 12000,
+    liveClassPrice: 20000,
+    learningType: "hybrid",
     duration: "10 weeks",
     level: "Intermediate",
     enrolledCount: 62,
@@ -48,6 +57,7 @@ const mockCourses: Course[] = [
     title: "Physics Fundamentals",
     description: "Explore the laws of nature through experiments and theory",
     price: 22000,
+    learningType: "live_classes",
     duration: "12 weeks",
     level: "Beginner",
     enrolledCount: 38,
@@ -57,7 +67,8 @@ const mockCourses: Course[] = [
     id: "4",
     title: "Chemistry Basics",
     description: "Learn the fundamentals of chemistry and chemical reactions",
-    price: 22000,
+    price: 18000,
+    learningType: "self_paced",
     duration: "10 weeks",
     level: "Beginner",
     enrolledCount: 41,
@@ -68,6 +79,9 @@ const mockCourses: Course[] = [
     title: "Biology for Beginners",
     description: "Discover the science of life and living organisms",
     price: 20000,
+    selfPacedPrice: 12000,
+    liveClassPrice: 20000,
+    learningType: "hybrid",
     duration: "10 weeks",
     level: "Beginner",
     enrolledCount: 55,
@@ -146,11 +160,17 @@ const CourseSelectionStep = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="font-semibold flex items-center gap-2">
+                        <h3 className="font-semibold flex items-center gap-2 flex-wrap">
                           {course.title}
                           {isPreselected && (
                             <Badge variant="secondary" className="text-xs">
                               Selected
+                            </Badge>
+                          )}
+                          {course.learningType === "hybrid" && (
+                            <Badge variant="outline" className="text-xs border-primary text-primary">
+                              <Zap className="h-3 w-3 mr-1" />
+                              Flexible
                             </Badge>
                           )}
                         </h3>
@@ -159,9 +179,18 @@ const CourseSelectionStep = ({
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="font-semibold">
-                          ₦{course.price.toLocaleString()}
-                        </div>
+                        {course.learningType === "hybrid" ? (
+                          <div>
+                            <div className="text-xs text-muted-foreground">From</div>
+                            <div className="font-semibold">
+                              ₦{(course.selfPacedPrice || course.price).toLocaleString()}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="font-semibold">
+                            ₦{course.price.toLocaleString()}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-4 mt-2">
