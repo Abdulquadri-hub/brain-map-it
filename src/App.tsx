@@ -14,6 +14,7 @@ import StudentsPage from "./pages/dashboard/StudentsPage";
 import CoursesPage from "./pages/dashboard/CoursesPage";
 import CourseBuilderPage from "./pages/dashboard/CourseBuilderPage";
 import InstructorsPage from "./pages/dashboard/InstructorsPage";
+import LiveSessionsPage from "./pages/dashboard/LiveSessionsPage";
 import ReportsPage from "./pages/dashboard/ReportsPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import LoginPage from "./pages/auth/LoginPage";
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="courses/:courseId/edit" element={<CourseBuilderPage />} />
                 <Route path="courses/new" element={<CourseBuilderPage />} />
                 <Route path="instructors" element={<InstructorsPage />} />
+                <Route path="live-sessions" element={<LiveSessionsPage />} />
                 <Route path="enrollments" element={<EnrollmentRequestsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />

@@ -4,6 +4,7 @@ import {
   Users, 
   BookOpen, 
   GraduationCap, 
+  Video,
   BarChart3, 
   Settings,
   LogOut,
@@ -28,6 +29,7 @@ const mainMenuItems = [
   { title: "Students", url: "/dashboard/students", icon: Users },
   { title: "Courses", url: "/dashboard/courses", icon: BookOpen },
   { title: "Instructors", url: "/dashboard/instructors", icon: GraduationCap },
+  { title: "Live Sessions", url: "/dashboard/live-sessions", icon: Video },
   { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
 ];
 
