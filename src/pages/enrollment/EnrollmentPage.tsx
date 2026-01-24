@@ -8,26 +8,21 @@ import ParentRegistrationStep from "@/components/enrollment/ParentRegistrationSt
 import ChildRegistrationStep from "@/components/enrollment/ChildRegistrationStep";
 import AdultRegistrationStep from "@/components/enrollment/AdultRegistrationStep";
 import CourseSelectionStep from "@/components/enrollment/CourseSelectionStep";
-import LearningTypeChoice from "@/components/enrollment/LearningTypeChoice";
 import PaymentStep from "@/components/enrollment/PaymentStep";
 import EnrollmentSuccessStep from "@/components/enrollment/EnrollmentSuccessStep";
-import { LearningType } from "@/types/course";
 
-// Laravel Inertia.js Integration:
-// import { usePage, router } from '@inertiajs/react'
-// 
-// Replace mock data with:
-// const { school, courses, preselectedCourse } = usePage<{
-//   school: School,
-//   courses: Course[],
-//   preselectedCourse?: Course
-// }>().props
-//
-// For form submission:
-// router.post('/enrollment', enrollmentData, {
-//   onSuccess: () => setCurrentStep('success'),
-//   onError: (errors) => setErrors(errors)
-// })
+/**
+ * EnrollmentPage - V3 Simplified
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive school, courses, batches data
+ * - Use router.post('/enrollment', enrollmentData) to submit
+ * 
+ * V3 Changes:
+ * - Removed LearningTypeChoice step (all courses are live classes)
+ * - Added batch selection step (coming in Phase 2)
+ * - Simplified payment to single price per course
+ */
 
 interface ParentData {
   name: string;
@@ -59,20 +54,16 @@ export interface EnrollmentData {
   child?: Partial<ChildData>;
   adult?: Partial<AdultData>;
   selectedCourses: string[];
-  selectedLearningType: LearningType | null;
+  selectedBatchId?: string; // V3: Batch selection
   paymentMethod: string;
   paymentReference?: string;
 }
-
-const defaultParent: ParentData = { name: "", email: "", phone: "", password: "" };
-const defaultChild: ChildData = { name: "", dateOfBirth: "", gender: "", grade: "" };
-const defaultAdult: AdultData = { name: "", email: "", phone: "", dateOfBirth: "", password: "" };
 
 const steps = [
   { id: "type", label: "Account Type" },
   { id: "registration", label: "Registration" },
   { id: "courses", label: "Select Courses" },
-  { id: "learning", label: "Learning Type" },
+  // { id: "batch", label: "Select Batch" }, // TODO: Add in Phase 2
   { id: "payment", label: "Payment" },
   { id: "success", label: "Complete" },
 ];
@@ -86,27 +77,11 @@ const EnrollmentPage = () => {
   const [enrollmentData, setEnrollmentData] = useState<EnrollmentData>({
     enrollmentType: null,
     selectedCourses: preselectedCourseId ? [preselectedCourseId] : [],
-    selectedLearningType: null,
     paymentMethod: "",
   });
 
-  // Mock course data for learning type pricing
-  // In production, this comes from the selected courses
-  const getHybridCourseSelected = () => {
-    // Check if any selected course supports hybrid learning
-    // For now, mock that courses with id "1" or "2" are hybrid
-    return enrollmentData.selectedCourses.some(id => ["1", "2"].includes(id));
-  };
-
-  const getMockPricing = () => {
-    // Calculate total based on selected courses and learning type
-    const baseSelfPaced = enrollmentData.selectedCourses.length * 15000;
-    const baseLive = enrollmentData.selectedCourses.length * 25000;
-    return { selfPaced: baseSelfPaced, live: baseLive };
-  };
-
   // Laravel Inertia.js Integration:
-  // const { school, courses } = usePage().props
+  // const { school, courses, batches } = usePage().props
 
   const school = {
     slug: "brightstars",
@@ -243,57 +218,35 @@ const EnrollmentPage = () => {
             selectedCourses={enrollmentData.selectedCourses}
             preselectedCourseId={preselectedCourseId}
             onUpdate={(selectedCourses) => updateEnrollmentData({ selectedCourses })}
-            onNext={() => {
-              // If hybrid courses selected, go to learning type step
-              // Otherwise skip to payment
-              if (getHybridCourseSelected()) {
-                nextStep();
-              } else {
-                // Skip learning type step, set default to self_paced
-                updateEnrollmentData({ selectedLearningType: "self_paced" });
-                setCurrentStep(4); // Go directly to payment
-              }
-            }}
-            onBack={prevStep}
-          />
-        );
-
-      case 3:
-        // Learning Type Selection (only for hybrid courses)
-        const pricing = getMockPricing();
-        return (
-          <LearningTypeChoice
-            courseName={enrollmentData.selectedCourses.length === 1 
-              ? "this course" 
-              : `${enrollmentData.selectedCourses.length} courses`}
-            selfPacedPrice={pricing.selfPaced}
-            liveClassPrice={pricing.live}
-            selectedType={enrollmentData.selectedLearningType}
-            onSelect={(type) => updateEnrollmentData({ selectedLearningType: type })}
             onNext={nextStep}
             onBack={prevStep}
           />
         );
 
-      case 4:
+      // TODO: Add Batch Selection step in Phase 2
+      // case 3:
+      //   return (
+      //     <BatchSelectionStep
+      //       courseId={enrollmentData.selectedCourses[0]}
+      //       selectedBatchId={enrollmentData.selectedBatchId}
+      //       onSelect={(batchId) => updateEnrollmentData({ selectedBatchId: batchId })}
+      //       onNext={nextStep}
+      //       onBack={prevStep}
+      //     />
+      //   );
+
+      case 3:
         // Payment
         return (
           <PaymentStep
             enrollmentData={enrollmentData}
             onUpdate={(data) => updateEnrollmentData(data)}
             onNext={nextStep}
-            onBack={() => {
-              // Go back to learning type or courses depending on hybrid
-              if (getHybridCourseSelected()) {
-                prevStep();
-              } else {
-                setCurrentStep(2); // Go back to course selection
-              }
-            }}
+            onBack={prevStep}
           />
         );
 
-      case 5:
+      case 4:
         // Success
         return <EnrollmentSuccessStep enrollmentData={enrollmentData} schoolSlug={slug || ""} />;
 

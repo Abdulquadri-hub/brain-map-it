@@ -11,7 +11,14 @@ import {
   Users,
   ImageIcon,
   Upload,
-  Sparkles,
+  Plus,
+  Trash2,
+  Video,
+  Link as LinkIcon,
+  FileText,
+  MessageCircle,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,29 +43,68 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import ModuleEditor from "@/components/courses/ModuleEditor";
-import LearningTypeSelector from "@/components/courses/LearningTypeSelector";
-import LiveSessionPlanner from "@/components/courses/LiveSessionPlanner";
-import type { Course, Module, CourseStatus, LearningType, CoursePricing, LiveSessionConfig, WhatsAppConfig } from "@/types/course";
+import type { 
+  Course, 
+  CourseStatus, 
+  LiveSessionConfig, 
+  WhatsAppConfig, 
+  CourseMaterial,
+  AcademicLevel,
+  DayOfWeek,
+  LivePlatform,
+  ACADEMIC_LEVEL_LABELS,
+  DAY_LABELS,
+  PLATFORM_LABELS,
+  DEFAULT_LIVE_SESSION,
+} from "@/types/course";
 
-// Laravel Inertia.js Integration:
-// import { usePage, router } from '@inertiajs/react'
-//
-// Replace mock data with:
-// const { course, instructors, categories } = usePage<{
-//   course: Course,
-//   instructors: Instructor[],
-//   categories: string[]
-// }>().props
-//
-// For saving:
-// router.put(`/dashboard/courses/${course.id}`, courseData, {
-//   onSuccess: () => toast.success('Course saved!'),
-//   onError: (errors) => Object.values(errors).forEach(e => toast.error(e))
-// })
+/**
+ * CourseBuilderPage - V3 Simplified
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive course from CourseController@edit
+ * - Use router.put(`/dashboard/courses/${course.id}`, courseData) to save
+ * 
+ * V3 Changes:
+ * - Removed LearningType selector (all courses are live classes)
+ * - Removed module/lesson curriculum (replaced with materials)
+ * - Simplified to: Basic Info, Schedule, Materials tabs
+ * - Single price per course
+ */
 
 const categories = ["Mathematics", "English", "Science", "History", "Technology", "Arts", "Languages", "Business"];
-const levels = ["Beginner", "Intermediate", "Advanced"] as const;
+
+const academicLevels: { value: AcademicLevel; label: string }[] = [
+  { value: "primary_1", label: "Primary 1" },
+  { value: "primary_2", label: "Primary 2" },
+  { value: "primary_3", label: "Primary 3" },
+  { value: "primary_4", label: "Primary 4" },
+  { value: "primary_5", label: "Primary 5" },
+  { value: "primary_6", label: "Primary 6" },
+  { value: "jss_1", label: "JSS 1" },
+  { value: "jss_2", label: "JSS 2" },
+  { value: "jss_3", label: "JSS 3" },
+  { value: "sss_1", label: "SSS 1" },
+  { value: "sss_2", label: "SSS 2" },
+  { value: "sss_3", label: "SSS 3" },
+  { value: "adult", label: "Adult Education" },
+];
+
+const daysOfWeek: { value: DayOfWeek; label: string }[] = [
+  { value: "monday", label: "Monday" },
+  { value: "tuesday", label: "Tuesday" },
+  { value: "wednesday", label: "Wednesday" },
+  { value: "thursday", label: "Thursday" },
+  { value: "friday", label: "Friday" },
+  { value: "saturday", label: "Saturday" },
+  { value: "sunday", label: "Sunday" },
+];
+
+const platforms: { value: LivePlatform; label: string }[] = [
+  { value: "google_meet", label: "Google Meet" },
+  { value: "zoom", label: "Zoom" },
+  { value: "teams", label: "Microsoft Teams" },
+];
 
 const mockInstructors = [
   { id: "1", name: "Dr. James Wilson" },
@@ -72,73 +118,65 @@ const CourseBuilderPage = () => {
   const navigate = useNavigate();
   const isNewCourse = courseId === "new";
 
-  // Mock course data - replace with Inertia props
+  // Course state - V3 simplified structure
   const [course, setCourse] = useState<Partial<Course>>({
     id: isNewCourse ? "" : courseId,
     title: isNewCourse ? "" : "Advanced Mathematics",
-    description: isNewCourse ? "" : "Master calculus, algebra, and geometry with practical applications.",
+    description: isNewCourse ? "" : "Master calculus, algebra, and geometry with practical applications through interactive live classes.",
     shortDescription: isNewCourse ? "" : "Comprehensive math course for advanced learners",
     category: isNewCourse ? "" : "Mathematics",
-    level: isNewCourse ? "Beginner" : "Advanced",
+    academicLevel: isNewCourse ? "adult" : "sss_2",
     price: isNewCourse ? 0 : 25000,
-    duration: isNewCourse ? "" : "12 weeks",
+    durationWeeks: isNewCourse ? 8 : 12,
     status: "draft",
-    learningType: isNewCourse ? "hybrid" : "hybrid",
-    allowsStudentChoice: true,
-    pricing: isNewCourse 
-      ? { selfPacedPrice: 15000, liveClassPrice: 25000 }
-      : { selfPacedPrice: 15000, liveClassPrice: 25000 },
-    liveSession: isNewCourse ? undefined : {
+    liveSession: isNewCourse ? {
+      dayOfWeek: "saturday",
+      time: "10:00",
+      duration: 90,
       platform: "google_meet",
-      schedule: [{ dayOfWeek: "Saturday", time: "10:00", duration: 60 }],
-      autoGenerateLink: true,
-      recordSessions: true,
+      timezone: "Africa/Lagos",
+    } : {
+      dayOfWeek: "saturday",
+      time: "10:00",
+      duration: 90,
+      platform: "google_meet",
+      timezone: "Africa/Lagos",
     },
-    whatsApp: { enabled: true, groupLink: "", accessType: "live_only" },
+    whatsApp: { enabled: true, groupLink: "" },
     instructor: isNewCourse ? undefined : {
       id: "1",
       name: "Dr. James Wilson",
       title: "Mathematics Department Head",
     },
+    materials: isNewCourse ? [] : [
+      { id: "1", courseId: courseId || "", title: "Course Syllabus", type: "pdf", url: "/materials/syllabus.pdf", order: 0, createdAt: new Date().toISOString() },
+      { id: "2", courseId: courseId || "", title: "Introduction Video", type: "video_link", url: "https://youtube.com/watch?v=xyz", order: 1, createdAt: new Date().toISOString() },
+    ],
     features: isNewCourse ? [] : [
-      "24/7 access to course materials",
-      "Live weekly sessions",
+      "Weekly live interactive sessions",
+      "WhatsApp group support",
       "Personalized feedback on assignments",
+      "Certificate upon completion",
     ],
     requirements: isNewCourse ? [] : [
       "Basic understanding of algebra",
       "Access to a computer or tablet",
+      "Stable internet connection for live classes",
     ],
-    modules: isNewCourse ? [] : [
-      {
-        id: "1",
-        courseId: courseId || "",
-        title: "Introduction to Calculus",
-        description: "Getting started with calculus concepts",
-        order: 0,
-        lessons: [
-          { id: "1", moduleId: "1", title: "What is Calculus?", duration: "15 min", type: "video", order: 0, status: "published" },
-          { id: "2", moduleId: "1", title: "Limits and Continuity", duration: "25 min", type: "video", order: 1, status: "published" },
-        ],
-      },
-      {
-        id: "2",
-        courseId: courseId || "",
-        title: "Differentiation",
-        description: "Learn about derivatives",
-        order: 1,
-        lessons: [
-          { id: "3", moduleId: "2", title: "Basic Derivatives", duration: "20 min", type: "video", order: 0, status: "draft" },
-          { id: "4", moduleId: "2", title: "Practice Quiz", duration: "15 min", type: "quiz", order: 1, status: "draft" },
-        ],
-      },
-    ],
+    totalBatches: 0,
+    activeBatches: 0,
+    totalEnrollments: 0,
   });
 
   const [activeTab, setActiveTab] = useState("details");
   const [isSaving, setIsSaving] = useState(false);
   const [newFeature, setNewFeature] = useState("");
   const [newRequirement, setNewRequirement] = useState("");
+  const [newMaterial, setNewMaterial] = useState<Partial<CourseMaterial>>({
+    title: "",
+    type: "pdf",
+    url: "",
+  });
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -189,45 +227,58 @@ const CourseBuilderPage = () => {
     });
   };
 
-  const handleModulesChange = (modules: Module[]) => {
-    setCourse({ ...course, modules });
+  const handleAddMaterial = () => {
+    if (!newMaterial.title || !newMaterial.url) return;
+    const material: CourseMaterial = {
+      id: `material-${Date.now()}`,
+      courseId: courseId || "",
+      title: newMaterial.title,
+      type: newMaterial.type as "pdf" | "link" | "video_link",
+      url: newMaterial.url,
+      description: newMaterial.description,
+      order: (course.materials || []).length,
+      createdAt: new Date().toISOString(),
+    };
+    setCourse({
+      ...course,
+      materials: [...(course.materials || []), material],
+    });
+    setNewMaterial({ title: "", type: "pdf", url: "" });
+    toast.success("Material added!");
   };
 
-  const handleLearningTypeChange = (learningType: LearningType) => {
-    setCourse({ ...course, learningType });
+  const handleRemoveMaterial = (materialId: string) => {
+    setCourse({
+      ...course,
+      materials: (course.materials || []).filter((m) => m.id !== materialId),
+    });
+    toast.success("Material removed");
   };
 
-  const handlePricingChange = (pricing: CoursePricing) => {
-    setCourse({ ...course, pricing });
+  const handleLiveSessionChange = (updates: Partial<LiveSessionConfig>) => {
+    setCourse({
+      ...course,
+      liveSession: { ...course.liveSession!, ...updates },
+    });
   };
 
-  const handleAllowsChoiceChange = (allowsStudentChoice: boolean) => {
-    setCourse({ ...course, allowsStudentChoice });
+  const handleWhatsAppChange = (updates: Partial<WhatsAppConfig>) => {
+    setCourse({
+      ...course,
+      whatsApp: { ...course.whatsApp!, ...updates },
+    });
   };
 
-  const handleLiveSessionChange = (liveSession: LiveSessionConfig) => {
-    setCourse({ ...course, liveSession });
-  };
-
-  const handleWhatsAppChange = (whatsApp: WhatsAppConfig) => {
-    setCourse({ ...course, whatsApp });
-  };
-
-  const totalLessons = (course.modules || []).reduce(
-    (acc, m) => acc + m.lessons.length,
-    0
-  );
-
-  const getLearningTypeBadge = () => {
-    switch (course.learningType) {
-      case "self_paced":
-        return <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">Self-Paced</Badge>;
-      case "live_classes":
-        return <Badge variant="secondary" className="bg-green-500/10 text-green-600">Live Classes</Badge>;
-      case "hybrid":
-        return <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">Hybrid</Badge>;
+  const getMaterialIcon = (type: string) => {
+    switch (type) {
+      case "pdf":
+        return <FileText className="h-4 w-4" />;
+      case "video_link":
+        return <Video className="h-4 w-4" />;
+      case "link":
+        return <LinkIcon className="h-4 w-4" />;
       default:
-        return null;
+        return <FileText className="h-4 w-4" />;
     }
   };
 
@@ -251,10 +302,12 @@ const CourseBuilderPage = () => {
                 >
                   {course.status}
                 </Badge>
-                {getLearningTypeBadge()}
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                  Live Classes
+                </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                {totalLessons} lessons • {(course.modules || []).length} modules
+                {course.durationWeeks || 0} weeks • {academicLevels.find(l => l.value === course.academicLevel)?.label || "Not set"}
               </p>
             </div>
           </div>
@@ -301,13 +354,13 @@ const CourseBuilderPage = () => {
               <Settings className="h-4 w-4" />
               Course Details
             </TabsTrigger>
-            <TabsTrigger value="learning-type" className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Learning Type
+            <TabsTrigger value="schedule" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Live Schedule
             </TabsTrigger>
-            <TabsTrigger value="curriculum" className="gap-2">
+            <TabsTrigger value="materials" className="gap-2">
               <BookOpen className="h-4 w-4" />
-              Curriculum
+              Materials
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Users className="h-4 w-4" />
@@ -373,20 +426,20 @@ const CourseBuilderPage = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Level</Label>
+                        <Label>Academic Level</Label>
                         <Select
-                          value={course.level || ""}
-                          onValueChange={(value: typeof levels[number]) =>
-                            setCourse({ ...course, level: value })
+                          value={course.academicLevel || ""}
+                          onValueChange={(value: AcademicLevel) =>
+                            setCourse({ ...course, academicLevel: value })
                           }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select level" />
                           </SelectTrigger>
                           <SelectContent className="bg-popover border border-border">
-                            {levels.map((level) => (
-                              <SelectItem key={level} value={level}>
-                                {level}
+                            {academicLevels.map((level) => (
+                              <SelectItem key={level.value} value={level.value}>
+                                {level.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -395,39 +448,49 @@ const CourseBuilderPage = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Duration</Label>
+                        <Label>Duration (Weeks)</Label>
                         <Input
-                          value={course.duration || ""}
-                          onChange={(e) => setCourse({ ...course, duration: e.target.value })}
-                          placeholder="e.g., 12 weeks"
+                          type="number"
+                          value={course.durationWeeks || ""}
+                          onChange={(e) => setCourse({ ...course, durationWeeks: Number(e.target.value) })}
+                          placeholder="e.g., 12"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Instructor</Label>
-                        <Select
-                          value={course.instructor?.id || ""}
-                          onValueChange={(value) => {
-                            const instructor = mockInstructors.find((i) => i.id === value);
-                            if (instructor) {
-                              setCourse({
-                                ...course,
-                                instructor: { ...instructor, title: "", bio: "" },
-                              });
-                            }
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select instructor" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border border-border">
-                            {mockInstructors.map((instructor) => (
-                              <SelectItem key={instructor.id} value={instructor.id}>
-                                {instructor.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Price (₦)</Label>
+                        <Input
+                          type="number"
+                          value={course.price || ""}
+                          onChange={(e) => setCourse({ ...course, price: Number(e.target.value) })}
+                          placeholder="e.g., 25000"
+                        />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Instructor</Label>
+                      <Select
+                        value={course.instructor?.id || ""}
+                        onValueChange={(value) => {
+                          const instructor = mockInstructors.find((i) => i.id === value);
+                          if (instructor) {
+                            setCourse({
+                              ...course,
+                              instructor: { ...instructor, title: "", bio: "" },
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select instructor" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border border-border">
+                          {mockInstructors.map((instructor) => (
+                            <SelectItem key={instructor.id} value={instructor.id}>
+                              {instructor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </CardContent>
                 </Card>
@@ -445,7 +508,7 @@ const CourseBuilderPage = () => {
                       <Input
                         value={newFeature}
                         onChange={(e) => setNewFeature(e.target.value)}
-                        placeholder="e.g., Lifetime access to materials"
+                        placeholder="e.g., Weekly live sessions"
                         onKeyDown={(e) => e.key === "Enter" && handleAddFeature()}
                       />
                       <Button onClick={handleAddFeature}>Add</Button>
@@ -537,41 +600,21 @@ const CourseBuilderPage = () => {
                     <CardTitle className="text-base">Pricing</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {course.learningType === "self_paced" && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Self-Paced</span>
-                        <span className="font-medium">
-                          ₦{(course.pricing?.selfPacedPrice || 0).toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-                    {course.learningType === "live_classes" && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Live Classes</span>
-                        <span className="font-medium">
-                          ₦{(course.pricing?.liveClassPrice || 0).toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-                    {course.learningType === "hybrid" && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Self-Paced</span>
-                          <span className="font-medium">
-                            ₦{(course.pricing?.selfPacedPrice || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Live Classes</span>
-                          <span className="font-medium">
-                            ₦{(course.pricing?.liveClassPrice || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    <p className="text-xs text-muted-foreground pt-2">
-                      Configure pricing in the Learning Type tab
-                    </p>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Course Price</span>
+                      <span className="font-medium text-lg">
+                        ₦{(course.price || 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="font-medium">{course.durationWeeks || 0} weeks</span>
+                    </div>
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        All students join live class batches
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -583,16 +626,16 @@ const CourseBuilderPage = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Enrolled Students</span>
-                        <span className="font-medium">45</span>
+                        <span className="text-muted-foreground">Active Batches</span>
+                        <span className="font-medium">{course.activeBatches || 0}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Completion Rate</span>
-                        <span className="font-medium">72%</span>
+                        <span className="text-muted-foreground">Total Batches</span>
+                        <span className="font-medium">{course.totalBatches || 0}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Average Rating</span>
-                        <span className="font-medium">4.8 / 5</span>
+                        <span className="text-muted-foreground">Total Enrollments</span>
+                        <span className="font-medium">{course.totalEnrollments || 0}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -601,44 +644,264 @@ const CourseBuilderPage = () => {
             </div>
           </TabsContent>
 
-          {/* Learning Type Tab - NEW */}
-          <TabsContent value="learning-type" className="space-y-6">
+          {/* Schedule Tab */}
+          <TabsContent value="schedule" className="space-y-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold">Learning Experience</h2>
+              <h2 className="text-2xl font-bold">Live Session Schedule</h2>
               <p className="text-muted-foreground">
-                Choose how students will experience your course
+                Configure when live classes will be held for each batch
               </p>
             </div>
 
-            <LearningTypeSelector
-              selectedType={course.learningType || "hybrid"}
-              onTypeChange={handleLearningTypeChange}
-              pricing={course.pricing || { selfPacedPrice: 0, liveClassPrice: 0 }}
-              onPricingChange={handlePricingChange}
-              allowsStudentChoice={course.allowsStudentChoice || false}
-              onAllowsChoiceChange={handleAllowsChoiceChange}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Weekly Schedule</CardTitle>
+                  <CardDescription>
+                    Set the recurring day and time for live sessions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Day of Week</Label>
+                    <Select
+                      value={course.liveSession?.dayOfWeek || "saturday"}
+                      onValueChange={(value: DayOfWeek) =>
+                        handleLiveSessionChange({ dayOfWeek: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border border-border">
+                        {daysOfWeek.map((day) => (
+                          <SelectItem key={day.value} value={day.value}>
+                            {day.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time</Label>
+                    <Input
+                      type="time"
+                      value={course.liveSession?.time || "10:00"}
+                      onChange={(e) => handleLiveSessionChange({ time: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration (minutes)</Label>
+                    <Select
+                      value={String(course.liveSession?.duration || 90)}
+                      onValueChange={(value) =>
+                        handleLiveSessionChange({ duration: Number(value) })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border border-border">
+                        <SelectItem value="60">60 minutes (1 hour)</SelectItem>
+                        <SelectItem value="90">90 minutes (1.5 hours)</SelectItem>
+                        <SelectItem value="120">120 minutes (2 hours)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Platform</Label>
+                    <Select
+                      value={course.liveSession?.platform || "google_meet"}
+                      onValueChange={(value: LivePlatform) =>
+                        handleLiveSessionChange({ platform: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border border-border">
+                        {platforms.map((platform) => (
+                          <SelectItem key={platform.value} value={platform.value}>
+                            {platform.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Live Session Planner - only for live_classes or hybrid */}
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-4">Live Session Configuration</h3>
-              <LiveSessionPlanner
-                config={course.liveSession}
-                onConfigChange={handleLiveSessionChange}
-                whatsApp={course.whatsApp}
-                onWhatsAppChange={handleWhatsAppChange}
-                disabled={course.learningType === "self_paced"}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>WhatsApp Group</CardTitle>
+                  <CardDescription>
+                    Enable a WhatsApp group for student communication
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Enable WhatsApp Group</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Students will join the group after enrollment
+                      </p>
+                    </div>
+                    <Switch
+                      checked={course.whatsApp?.enabled || false}
+                      onCheckedChange={(checked) =>
+                        handleWhatsAppChange({ enabled: checked })
+                      }
+                    />
+                  </div>
+                  {course.whatsApp?.enabled && (
+                    <div className="space-y-2">
+                      <Label>Group Invite Link</Label>
+                      <Input
+                        value={course.whatsApp?.groupLink || ""}
+                        onChange={(e) =>
+                          handleWhatsAppChange({ groupLink: e.target.value })
+                        }
+                        placeholder="https://chat.whatsapp.com/..."
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Create a WhatsApp group and paste the invite link here
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Schedule Preview */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Schedule Preview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <Calendar className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      Every {daysOfWeek.find(d => d.value === course.liveSession?.dayOfWeek)?.label} at {course.liveSession?.time || "10:00"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {course.liveSession?.duration || 90} minutes via {platforms.find(p => p.value === course.liveSession?.platform)?.label}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* Curriculum Tab */}
-          <TabsContent value="curriculum">
-            <ModuleEditor
-              modules={course.modules || []}
-              onModulesChange={handleModulesChange}
-              courseId={courseId || "new"}
-            />
+          {/* Materials Tab */}
+          <TabsContent value="materials" className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold">Course Materials</h2>
+              <p className="text-muted-foreground">
+                Add PDFs, videos, and links for students to access
+              </p>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Material</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      value={newMaterial.title || ""}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
+                      placeholder="e.g., Course Syllabus"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Type</Label>
+                    <Select
+                      value={newMaterial.type || "pdf"}
+                      onValueChange={(value: "pdf" | "link" | "video_link") =>
+                        setNewMaterial({ ...newMaterial, type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border border-border">
+                        <SelectItem value="pdf">PDF Document</SelectItem>
+                        <SelectItem value="video_link">Video Link</SelectItem>
+                        <SelectItem value="link">External Link</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>URL</Label>
+                    <Input
+                      value={newMaterial.url || ""}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, url: e.target.value })}
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleAddMaterial}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Material
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Materials ({(course.materials || []).length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(course.materials || []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No materials added yet</p>
+                    <p className="text-sm">Add PDFs, videos, or links for students</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(course.materials || []).map((material) => (
+                      <div
+                        key={material.id}
+                        className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-muted">
+                            {getMaterialIcon(material.type)}
+                          </div>
+                          <div>
+                            <p className="font-medium">{material.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {material.type === "pdf" ? "PDF Document" : material.type === "video_link" ? "Video" : "Link"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={material.url} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveMaterial(material.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Settings Tab */}
@@ -664,47 +927,10 @@ const CourseBuilderPage = () => {
                   <div>
                     <Label>Allow Late Enrollment</Label>
                     <p className="text-sm text-muted-foreground">
-                      Students can enroll after the start date
+                      Students can join after a batch has started
                     </p>
                   </div>
                   <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div>
-                    <Label>Enrollment Limit</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Maximum number of students (0 = unlimited)
-                    </p>
-                  </div>
-                  <Input
-                    type="number"
-                    className="w-24"
-                    placeholder="0"
-                    defaultValue="0"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Schedule</CardTitle>
-                <CardDescription>Set course start and end dates</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Start Date</Label>
-                    <Input type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>End Date</Label>
-                    <Input type="date" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Class Time (Optional)</Label>
-                  <Input placeholder="e.g., Saturdays, 10:00 AM - 12:00 PM" />
                 </div>
               </CardContent>
             </Card>

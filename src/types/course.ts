@@ -1,11 +1,17 @@
-// Course & Content Management Types
-// Laravel Inertia.js Integration:
-// These types should match your Laravel backend models
+/**
+ * Course & Content Management Types - V3 Simplified
+ * 
+ * Laravel Inertia.js Integration:
+ * These types should match your Laravel backend models
+ * 
+ * V3 Changes:
+ * - Removed LearningType (self_paced, hybrid) - all courses are live classes
+ * - Removed CoursePricing - single price per course
+ * - Simplified live session config - single schedule per course
+ * - Removed module/lesson structure - replaced with course materials
+ */
 
-export type LessonType = "video" | "document" | "quiz" | "assignment";
 export type CourseStatus = "draft" | "active" | "archived";
-export type ContentStatus = "draft" | "published";
-export type LearningType = "self_paced" | "live_classes" | "hybrid";
 export type LivePlatform = "google_meet" | "zoom" | "teams";
 export type AcademicLevel = 
   | "primary_1" | "primary_2" | "primary_3" | "primary_4" | "primary_5" | "primary_6"
@@ -13,29 +19,7 @@ export type AcademicLevel =
   | "sss_1" | "sss_2" | "sss_3"
   | "adult";
 
-export interface Lesson {
-  id: string;
-  moduleId: string;
-  title: string;
-  description?: string;
-  type: LessonType;
-  duration: string;
-  content?: string;
-  videoUrl?: string;
-  documentUrl?: string;
-  order: number;
-  status: ContentStatus;
-  isFree?: boolean;
-}
-
-export interface Module {
-  id: string;
-  courseId: string;
-  title: string;
-  description?: string;
-  lessons: Lesson[];
-  order: number;
-}
+export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 export interface CourseInstructor {
   id: string;
@@ -45,116 +29,163 @@ export interface CourseInstructor {
   bio?: string;
 }
 
-export interface CourseSchedule {
-  startDate: string;
-  endDate: string;
-  classTime?: string;
+// Simplified course material (replaces complex module/lesson structure)
+export interface CourseMaterial {
+  id: string;
+  courseId: string;
+  title: string;
+  description?: string;
+  type: "pdf" | "link" | "video_link";
+  url: string;
+  order: number;
+  createdAt: string;
 }
 
-export interface LiveSessionSchedule {
-  dayOfWeek: string;
-  time: string;
-  duration: number; // in minutes
-  timezone?: string;
-}
-
+// Simple live session configuration (one schedule per course)
 export interface LiveSessionConfig {
+  dayOfWeek: DayOfWeek;
+  time: string; // "16:00" 24-hour format
+  duration: number; // in minutes (e.g., 90)
   platform: LivePlatform;
-  schedule: LiveSessionSchedule[];
-  meetingLink?: string;
-  autoGenerateLink: boolean;
-  recordSessions: boolean;
-  maxParticipants?: number;
+  timezone?: string; // default to WAT (West Africa Time)
 }
 
-export interface CoursePricing {
-  selfPacedPrice: number;
-  liveClassPrice: number;
-  // Hybrid allows student to choose, both prices apply
-}
-
+// WhatsApp group for course communication
 export interface WhatsAppConfig {
   enabled: boolean;
   groupLink?: string;
-  accessType: "live_only" | "all_students";
 }
 
 export interface Course {
   id: string;
+  schoolId: string;
   title: string;
   description: string;
   shortDescription?: string;
-  instructor: CourseInstructor;
+  instructor?: CourseInstructor;
   category: string;
-  level: "Beginner" | "Intermediate" | "Advanced";
-  academicLevel?: AcademicLevel;
-  price: number;
-  duration: string;
+  academicLevel: AcademicLevel;
+  price: number; // Single price in Naira
+  durationWeeks: number; // Course duration in weeks
   image?: string;
   status: CourseStatus;
-  enrolledCount: number;
-  rating?: number;
-  reviewCount?: number;
+  
+  // Live session configuration
+  liveSession: LiveSessionConfig;
+  
+  // WhatsApp group
+  whatsApp?: WhatsAppConfig;
+  
+  // Course materials (PDFs, links)
+  materials?: CourseMaterial[];
+  
+  // Statistics
+  totalBatches: number;
+  activeBatches: number;
+  totalEnrollments: number;
+  
+  // Features shown on course page
   features?: string[];
   requirements?: string[];
-  schedule?: CourseSchedule;
-  modules: Module[];
-  createdAt?: string;
-  updatedAt?: string;
   
-  // New Learning Type System fields
-  learningType: LearningType;
-  allowsStudentChoice: boolean; // For hybrid - let student pick their experience
-  pricing: CoursePricing;
-  liveSession?: LiveSessionConfig;
-  whatsApp?: WhatsAppConfig;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface StudentProgress {
-  lessonId: string;
-  completed: boolean;
-  completedAt?: string;
-  timeSpent?: number;
-}
-
-export interface CourseEnrollment {
-  id: string;
-  courseId: string;
-  studentId: string;
-  enrolledAt: string;
-  progress: StudentProgress[];
-  completedLessons: number;
-  totalLessons: number;
-  percentComplete: number;
-  lastAccessedAt?: string;
-  
-  // New fields for learning type
-  selectedLearningType: "self_paced" | "live_classes";
-  hasLiveAccess: boolean;
-  hasWhatsAppAccess: boolean;
-  paidAmount: number;
-}
-
-// Live Session types for Phase 4
+// Live Session instance (actual scheduled session for a batch)
 export interface LiveSession {
   id: string;
+  batchId: string;
   courseId: string;
   title: string;
   description?: string;
   scheduledAt: string;
   duration: number;
-  meetingLink: string;
+  meetingLink?: string;
+  platform: LivePlatform;
   status: "scheduled" | "live" | "completed" | "cancelled";
   recordingUrl?: string;
   attendeeCount?: number;
+  createdAt: string;
 }
 
 export interface SessionAttendance {
   id: string;
   sessionId: string;
   studentId: string;
-  joinedAt: string;
+  studentName: string;
+  joinedAt?: string;
   leftAt?: string;
-  duration: number;
-  status: "present" | "absent" | "late";
+  duration: number; // minutes attended
+  status: "present" | "absent" | "late" | "excused";
 }
+
+// For course creation/editing forms
+export interface CourseFormData {
+  title: string;
+  description: string;
+  shortDescription?: string;
+  category: string;
+  academicLevel: AcademicLevel;
+  price: number;
+  durationWeeks: number;
+  image?: string;
+  liveSession: LiveSessionConfig;
+  whatsApp?: WhatsAppConfig;
+  features: string[];
+  requirements: string[];
+}
+
+// Academic level display labels
+export const ACADEMIC_LEVEL_LABELS: Record<AcademicLevel, string> = {
+  primary_1: "Primary 1",
+  primary_2: "Primary 2",
+  primary_3: "Primary 3",
+  primary_4: "Primary 4",
+  primary_5: "Primary 5",
+  primary_6: "Primary 6",
+  jss_1: "JSS 1",
+  jss_2: "JSS 2",
+  jss_3: "JSS 3",
+  sss_1: "SSS 1",
+  sss_2: "SSS 2",
+  sss_3: "SSS 3",
+  adult: "Adult Education",
+};
+
+export const DAY_LABELS: Record<DayOfWeek, string> = {
+  monday: "Monday",
+  tuesday: "Tuesday",
+  wednesday: "Wednesday",
+  thursday: "Thursday",
+  friday: "Friday",
+  saturday: "Saturday",
+  sunday: "Sunday",
+};
+
+export const PLATFORM_LABELS: Record<LivePlatform, string> = {
+  google_meet: "Google Meet",
+  zoom: "Zoom",
+  teams: "Microsoft Teams",
+};
+
+// Default values
+export const DEFAULT_LIVE_SESSION: LiveSessionConfig = {
+  dayOfWeek: "saturday",
+  time: "10:00",
+  duration: 90,
+  platform: "google_meet",
+  timezone: "Africa/Lagos",
+};
+
+export const DEFAULT_COURSE_FORM: CourseFormData = {
+  title: "",
+  description: "",
+  category: "",
+  academicLevel: "adult",
+  price: 0,
+  durationWeeks: 8,
+  liveSession: DEFAULT_LIVE_SESSION,
+  features: [],
+  requirements: [],
+};

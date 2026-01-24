@@ -1,139 +1,129 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   Menu,
   X,
-  PlayCircle,
+  Video,
   FileText,
-  HelpCircle,
-  ClipboardList,
-  CheckCircle,
-  Circle,
+  Link as LinkIcon,
   Clock,
   BookOpen,
-  Lock,
+  Calendar,
+  MessageCircle,
+  Users,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { Course, Module, Lesson, LessonType } from "@/types/course";
+import type { Course, CourseMaterial } from "@/types/course";
 
-// Laravel Inertia.js Integration:
-// import { usePage, router } from '@inertiajs/react'
-//
-// Replace mock data with:
-// const { course, enrollment, currentLesson } = usePage<{
-//   course: Course,
-//   enrollment: CourseEnrollment,
-//   currentLesson: Lesson
-// }>().props
-//
-// For marking lesson complete:
-// router.post(`/learn/${courseId}/lessons/${lessonId}/complete`)
+/**
+ * CourseLearningPage - V3 Batch-Based Learning
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive batch, course, materials, attendance data
+ * 
+ * V3 Changes:
+ * - Removed module/lesson navigation (no self-paced content)
+ * - Focus on: materials, live session info, batch details, leaderboard
+ * - Students access materials and join live sessions
+ */
 
-const lessonTypeIcons: Record<LessonType, React.ReactNode> = {
-  video: <PlayCircle className="h-4 w-4" />,
-  document: <FileText className="h-4 w-4" />,
-  quiz: <HelpCircle className="h-4 w-4" />,
-  assignment: <ClipboardList className="h-4 w-4" />,
-};
-
-// Mock data
-const mockCourse: Course = {
+// Mock data - V3 structure (no modules/lessons)
+const mockCourse: Partial<Course> = {
   id: "1",
   title: "Advanced Mathematics",
-  description: "Master calculus, algebra, and geometry",
+  description: "Master calculus, algebra, and geometry through interactive live classes",
   category: "Mathematics",
-  level: "Advanced",
+  academicLevel: "sss_2",
   price: 25000,
-  duration: "12 weeks",
-  enrolledCount: 45,
+  durationWeeks: 12,
   status: "active",
-  learningType: "hybrid",
-  allowsStudentChoice: true,
-  pricing: { selfPacedPrice: 15000, liveClassPrice: 25000 },
+  liveSession: {
+    dayOfWeek: "saturday",
+    time: "10:00",
+    duration: 90,
+    platform: "google_meet",
+    timezone: "Africa/Lagos",
+  },
+  whatsApp: {
+    enabled: true,
+    groupLink: "https://chat.whatsapp.com/example",
+  },
   instructor: {
     id: "1",
     name: "Dr. Adaora Nwosu",
     title: "Mathematics Department Head",
   },
-  modules: [
-    {
-      id: "1",
-      courseId: "1",
-      title: "Introduction to Calculus",
-      order: 0,
-      lessons: [
-        { id: "1", moduleId: "1", title: "What is Calculus?", duration: "15 min", type: "video", order: 0, status: "published" },
-        { id: "2", moduleId: "1", title: "Limits and Continuity", duration: "25 min", type: "video", order: 1, status: "published" },
-        { id: "3", moduleId: "1", title: "Practice Problems", duration: "30 min", type: "document", order: 2, status: "published" },
-        { id: "4", moduleId: "1", title: "Module 1 Quiz", duration: "15 min", type: "quiz", order: 3, status: "published" },
-      ],
-    },
-    {
-      id: "2",
-      courseId: "1",
-      title: "Differentiation",
-      order: 1,
-      lessons: [
-        { id: "5", moduleId: "2", title: "Basic Derivatives", duration: "20 min", type: "video", order: 0, status: "published" },
-        { id: "6", moduleId: "2", title: "Chain Rule", duration: "25 min", type: "video", order: 1, status: "published" },
-        { id: "7", moduleId: "2", title: "Applications of Derivatives", duration: "30 min", type: "video", order: 2, status: "published" },
-        { id: "8", moduleId: "2", title: "Differentiation Assignment", duration: "45 min", type: "assignment", order: 3, status: "published" },
-      ],
-    },
-    {
-      id: "3",
-      courseId: "1",
-      title: "Integration",
-      order: 2,
-      lessons: [
-        { id: "9", moduleId: "3", title: "Indefinite Integrals", duration: "25 min", type: "video", order: 0, status: "published" },
-        { id: "10", moduleId: "3", title: "Definite Integrals", duration: "25 min", type: "video", order: 1, status: "published" },
-        { id: "11", moduleId: "3", title: "Integration Techniques", duration: "35 min", type: "video", order: 2, status: "published" },
-      ],
-    },
+  materials: [
+    { id: "1", courseId: "1", title: "Course Syllabus", type: "pdf", url: "/materials/syllabus.pdf", order: 0, createdAt: new Date().toISOString() },
+    { id: "2", courseId: "1", title: "Introduction Video", type: "video_link", url: "https://youtube.com/watch?v=xyz", order: 1, createdAt: new Date().toISOString() },
+    { id: "3", courseId: "1", title: "Week 1 Notes", type: "pdf", url: "/materials/week1.pdf", order: 2, createdAt: new Date().toISOString() },
+    { id: "4", courseId: "1", title: "Practice Problems", type: "link", url: "https://example.com/practice", order: 3, createdAt: new Date().toISOString() },
   ],
 };
 
-const mockCompletedLessons = new Set(["1", "2", "3"]);
+const mockBatch = {
+  id: "batch-1",
+  name: "January 2025 Batch",
+  startDate: "2025-01-15",
+  endDate: "2025-04-15",
+  currentEnrollment: 25,
+  maxStudents: 30,
+  nextSession: {
+    date: "2025-01-25",
+    time: "10:00",
+    meetingLink: "https://meet.google.com/abc-defg-hij",
+  },
+  completedSessions: 2,
+  totalSessions: 12,
+};
+
+const mockLeaderboard = [
+  { rank: 1, name: "Adaeze Okafor", score: 95, avatar: null },
+  { rank: 2, name: "Chidi Eze", score: 92, avatar: null },
+  { rank: 3, name: "Ngozi Adeyemi", score: 88, avatar: null },
+  { rank: 4, name: "You", score: 85, avatar: null, isCurrentUser: true },
+  { rank: 5, name: "Emeka Nwankwo", score: 82, avatar: null },
+];
 
 const CourseLearningPage = () => {
-  const { courseId, lessonId } = useParams();
+  const { courseId } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [completedLessons, setCompletedLessons] = useState<Set<string>>(mockCompletedLessons);
   
   const course = mockCourse;
-  const allLessons = course.modules.flatMap((m) => m.lessons);
-  const currentLesson = allLessons.find((l) => l.id === lessonId) || allLessons[0];
-  const currentLessonIndex = allLessons.findIndex((l) => l.id === currentLesson.id);
-  const prevLesson = currentLessonIndex > 0 ? allLessons[currentLessonIndex - 1] : null;
-  const nextLesson = currentLessonIndex < allLessons.length - 1 ? allLessons[currentLessonIndex + 1] : null;
-  
-  const totalLessons = allLessons.length;
-  const completedCount = completedLessons.size;
-  const progressPercent = Math.round((completedCount / totalLessons) * 100);
+  const batch = mockBatch;
+  const leaderboard = mockLeaderboard;
 
-  const handleMarkComplete = () => {
-    // Laravel Inertia.js Integration:
-    // router.post(`/learn/${courseId}/lessons/${currentLesson.id}/complete`)
-    setCompletedLessons(new Set([...completedLessons, currentLesson.id]));
+  const progressPercent = Math.round((batch.completedSessions / batch.totalSessions) * 100);
+
+  const getMaterialIcon = (type: string) => {
+    switch (type) {
+      case "pdf":
+        return <FileText className="h-4 w-4" />;
+      case "video_link":
+        return <Video className="h-4 w-4" />;
+      case "link":
+        return <LinkIcon className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
   };
 
-  const handleMarkIncomplete = () => {
-    const newCompleted = new Set(completedLessons);
-    newCompleted.delete(currentLesson.id);
-    setCompletedLessons(newCompleted);
+  const formatNextSession = () => {
+    const date = new Date(batch.nextSession.date);
+    return date.toLocaleDateString("en-NG", { 
+      weekday: "long", 
+      month: "short", 
+      day: "numeric" 
+    });
   };
-
-  const isLessonCompleted = completedLessons.has(currentLesson.id);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -163,109 +153,59 @@ const CourseLearningPage = () => {
             {/* Sidebar Header */}
             <div className="p-4 border-b">
               <Link
-                to="/dashboard"
+                to="/student/dashboard"
                 className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Link>
               <h2 className="font-semibold line-clamp-2">{course.title}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{batch.name}</p>
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                <span>{completedCount}/{totalLessons} lessons</span>
+                <span>{batch.completedSessions}/{batch.totalSessions} sessions</span>
                 <span>•</span>
                 <span>{progressPercent}% complete</span>
               </div>
               <Progress value={progressPercent} className="mt-3 h-2" />
             </div>
 
-            {/* Curriculum */}
+            {/* Materials List */}
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <Accordion
-                  type="multiple"
-                  defaultValue={course.modules.map((m) => m.id)}
-                  className="space-y-2"
-                >
-                  {course.modules.map((module, moduleIndex) => {
-                    const moduleCompletedCount = module.lessons.filter((l) =>
-                      completedLessons.has(l.id)
-                    ).length;
-                    const isModuleComplete = moduleCompletedCount === module.lessons.length;
+                <h3 className="font-medium text-sm text-muted-foreground mb-3">COURSE MATERIALS</h3>
+                <div className="space-y-2">
+                  {(course.materials || []).map((material) => (
+                    <a
+                      key={material.id}
+                      href={material.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <span className="text-muted-foreground">
+                        {getMaterialIcon(material.type)}
+                      </span>
+                      <span className="text-sm flex-1">{material.title}</span>
+                    </a>
+                  ))}
+                </div>
 
-                    return (
-                      <AccordionItem
-                        key={module.id}
-                        value={module.id}
-                        className="border rounded-lg px-3"
-                      >
-                        <AccordionTrigger className="hover:no-underline py-3">
-                          <div className="flex items-center gap-3 text-left">
-                            <div
-                              className={cn(
-                                "flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium",
-                                isModuleComplete
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-muted-foreground"
-                              )}
-                            >
-                              {isModuleComplete ? (
-                                <CheckCircle className="h-4 w-4" />
-                              ) : (
-                                moduleIndex + 1
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium">{module.title}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {moduleCompletedCount}/{module.lessons.length} complete
-                              </div>
-                            </div>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pb-3">
-                          <div className="space-y-1 ml-9">
-                            {module.lessons.map((lesson) => {
-                              const isActive = lesson.id === currentLesson.id;
-                              const isCompleted = completedLessons.has(lesson.id);
-
-                              return (
-                                <Link
-                                  key={lesson.id}
-                                  to={`/learn/${courseId}/lesson/${lesson.id}`}
-                                  className={cn(
-                                    "flex items-center gap-3 p-2 rounded-lg text-sm transition-colors",
-                                    isActive
-                                      ? "bg-primary/10 text-primary"
-                                      : "hover:bg-muted"
-                                  )}
-                                >
-                                  <span className={cn(
-                                    isCompleted ? "text-primary" : "text-muted-foreground"
-                                  )}>
-                                    {isCompleted ? (
-                                      <CheckCircle className="h-4 w-4" />
-                                    ) : (
-                                      lessonTypeIcons[lesson.type]
-                                    )}
-                                  </span>
-                                  <span className={cn(
-                                    "flex-1 line-clamp-1",
-                                    isCompleted && "text-muted-foreground"
-                                  )}>
-                                    {lesson.title}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {lesson.duration}
-                                  </span>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
+                {/* Quick Links */}
+                <div className="mt-6 space-y-2">
+                  <h3 className="font-medium text-sm text-muted-foreground mb-3">QUICK LINKS</h3>
+                  
+                  {course.whatsApp?.enabled && course.whatsApp.groupLink && (
+                    <a
+                      href={course.whatsApp.groupLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 hover:bg-green-500/20 transition-colors text-green-600"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">WhatsApp Group</span>
+                    </a>
+                  )}
+                </div>
               </div>
             </ScrollArea>
           </motion.aside>
@@ -294,145 +234,148 @@ const CourseLearningPage = () => {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex-1 mx-4 lg:mx-8">
-              <h1 className="text-lg font-semibold line-clamp-1">{currentLesson.title}</h1>
+              <h1 className="text-lg font-semibold">{course.title}</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="outline" className="text-xs">
-                  {currentLesson.type}
+                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                  Live Classes
                 </Badge>
                 <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {currentLesson.duration}
-                </span>
+                <span>{course.durationWeeks} weeks</span>
               </div>
             </div>
-            <Button
-              variant={isLessonCompleted ? "secondary" : "default"}
-              onClick={isLessonCompleted ? handleMarkIncomplete : handleMarkComplete}
-            >
-              {isLessonCompleted ? (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Completed
-                </>
-              ) : (
-                <>
-                  <Circle className="h-4 w-4 mr-2" />
-                  Mark Complete
-                </>
-              )}
-            </Button>
           </div>
         </header>
 
-        {/* Lesson Content */}
+        {/* Content */}
         <div className="flex-1 p-4 lg:p-8">
-          <div className="max-w-4xl mx-auto">
-            {/* Video Player Placeholder */}
-            {currentLesson.type === "video" && (
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center mb-8">
-                <div className="text-center">
-                  <PlayCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Video Player</p>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your video hosting (Vimeo, YouTube, etc.)
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Document Content Placeholder */}
-            {currentLesson.type === "document" && (
-              <div className="bg-card border rounded-lg p-8 mb-8">
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <h2>Lesson Content</h2>
-                  <p>
-                    This is where the document content would be displayed. You can use
-                    a rich text editor or Markdown renderer to display formatted content.
-                  </p>
-                  <h3>Example Section</h3>
-                  <ul>
-                    <li>Point one about the topic</li>
-                    <li>Point two with more details</li>
-                    <li>Point three to wrap up</li>
-                  </ul>
-                  <p>
-                    Additional content and explanations would go here. The document
-                    content is typically stored in the database and rendered dynamically.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Quiz Placeholder */}
-            {currentLesson.type === "quiz" && (
-              <div className="bg-card border rounded-lg p-8 mb-8 text-center">
-                <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Quiz: {currentLesson.title}</h2>
-                <p className="text-muted-foreground mb-6">
-                  Test your knowledge with this quiz
-                </p>
-                <Button>Start Quiz</Button>
-              </div>
-            )}
-
-            {/* Assignment Placeholder */}
-            {currentLesson.type === "assignment" && (
-              <div className="bg-card border rounded-lg p-8 mb-8">
-                <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">{currentLesson.title}</h2>
-                <p className="text-muted-foreground mb-6">
-                  Complete this assignment to demonstrate your understanding
-                </p>
-                <div className="space-y-4">
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-medium mb-2">Instructions</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Assignment instructions and requirements would be displayed here.
+          <div className="max-w-4xl mx-auto space-y-6">
+            
+            {/* Next Live Session Card */}
+            <Card className="border-primary/50 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Video className="h-5 w-5 text-primary" />
+                  Next Live Session
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-semibold">{formatNextSession()}</p>
+                    <p className="text-muted-foreground">
+                      {batch.nextSession.time} • {course.liveSession?.duration || 90} minutes
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Via {course.liveSession?.platform === "google_meet" ? "Google Meet" : 
+                           course.liveSession?.platform === "zoom" ? "Zoom" : "Microsoft Teams"}
                     </p>
                   </div>
-                  <Button>Submit Assignment</Button>
+                  <Button size="lg" asChild>
+                    <a href={batch.nextSession.meetingLink} target="_blank" rel="noopener noreferrer">
+                      <Video className="h-4 w-4 mr-2" />
+                      Join Session
+                    </a>
+                  </Button>
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
 
-            {/* Lesson Description */}
-            {currentLesson.description && (
-              <div className="mb-8">
-                <h3 className="font-semibold mb-2">About this lesson</h3>
-                <p className="text-muted-foreground">{currentLesson.description}</p>
-              </div>
-            )}
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Calendar className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-2xl font-bold">{batch.completedSessions}</p>
+                  <p className="text-xs text-muted-foreground">Sessions Attended</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Clock className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-2xl font-bold">{batch.totalSessions - batch.completedSessions}</p>
+                  <p className="text-xs text-muted-foreground">Sessions Left</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Users className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-2xl font-bold">{batch.currentEnrollment}</p>
+                  <p className="text-xs text-muted-foreground">Classmates</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Award className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-2xl font-bold">#4</p>
+                  <p className="text-xs text-muted-foreground">Your Rank</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Leaderboard */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-yellow-500" />
+                  Batch Leaderboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {leaderboard.map((student) => (
+                    <div
+                      key={student.rank}
+                      className={cn(
+                        "flex items-center gap-4 p-3 rounded-lg",
+                        student.isCurrentUser && "bg-primary/10 border border-primary/20"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center h-8 w-8 rounded-full text-sm font-bold",
+                        student.rank === 1 && "bg-yellow-500 text-yellow-900",
+                        student.rank === 2 && "bg-gray-300 text-gray-700",
+                        student.rank === 3 && "bg-orange-400 text-orange-900",
+                        student.rank > 3 && "bg-muted text-muted-foreground"
+                      )}>
+                        {student.rank}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">
+                          {student.name}
+                          {student.isCurrentUser && <Badge variant="outline" className="ml-2 text-xs">You</Badge>}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-primary">{student.score}%</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Course Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>About This Course</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{course.description}</p>
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      {course.instructor?.name?.charAt(0) || "I"}
+                    </div>
+                    <div>
+                      <p className="font-medium">{course.instructor?.name}</p>
+                      <p className="text-sm text-muted-foreground">{course.instructor?.title}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* Bottom Navigation */}
-        <footer className="sticky bottom-0 bg-background border-t px-4 lg:px-8 py-4">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            {prevLesson ? (
-              <Button variant="outline" asChild>
-                <Link to={`/learn/${courseId}/lesson/${prevLesson.id}`}>
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Previous:</span> {prevLesson.title.slice(0, 20)}...
-                </Link>
-              </Button>
-            ) : (
-              <div />
-            )}
-            {nextLesson ? (
-              <Button asChild>
-                <Link to={`/learn/${courseId}/lesson/${nextLesson.id}`}>
-                  <span className="hidden sm:inline">Next:</span> {nextLesson.title.slice(0, 20)}...
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="default" className="bg-primary">
-                Complete Course
-              </Button>
-            )}
-          </div>
-        </footer>
       </main>
     </div>
   );
