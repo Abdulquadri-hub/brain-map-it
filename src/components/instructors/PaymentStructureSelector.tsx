@@ -1,37 +1,36 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
-  Percent, 
-  Banknote, 
-  TrendingUp,
+  Banknote,
+  Users,
+  Calendar,
+  Settings,
   Check,
   Info
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { PaymentTerms, PaymentStructure } from "@/types/instructor";
+import { PaymentTerms, PaymentStructure, PAYMENT_STRUCTURE_LABELS, PAYMENT_STRUCTURE_DESCRIPTIONS } from "@/types/instructor";
 
 /**
- * PaymentStructureSelector Component
+ * PaymentStructureSelector Component - V3 Simplified
  * 
  * Laravel Inertia.js Integration:
  * - Values will be passed to InstructorController@store
  * - Payment terms stored in instructor_agreements table
+ * 
+ * V3 Changes:
+ * - Simplified to: per_batch, per_student, monthly, custom
+ * - Removed revenue_share and base_commission
+ * - Note: School owner handles payments directly, not platform
  */
 
 interface PaymentStructureSelectorProps {
@@ -44,33 +43,41 @@ const paymentOptions: {
   value: PaymentStructure;
   label: string;
   description: string;
-  icon: typeof Percent;
+  icon: typeof Banknote;
   color: string;
   example: string;
 }[] = [
   {
-    value: "revenue_share",
-    label: "Revenue Share",
-    description: "Instructor earns a percentage of course revenue",
-    icon: Percent,
+    value: "per_batch",
+    label: PAYMENT_STRUCTURE_LABELS.per_batch,
+    description: PAYMENT_STRUCTURE_DESCRIPTIONS.per_batch,
+    icon: Calendar,
     color: "text-primary",
-    example: "e.g., 30% of each enrollment fee",
+    example: "e.g., ₦20,000 per batch taught",
   },
   {
-    value: "fixed_salary",
-    label: "Fixed Salary",
-    description: "Instructor receives a fixed payment per period",
-    icon: Banknote,
+    value: "per_student",
+    label: PAYMENT_STRUCTURE_LABELS.per_student,
+    description: PAYMENT_STRUCTURE_DESCRIPTIONS.per_student,
+    icon: Users,
     color: "text-secondary",
+    example: "e.g., ₦2,000 per enrolled student",
+  },
+  {
+    value: "monthly",
+    label: PAYMENT_STRUCTURE_LABELS.monthly,
+    description: PAYMENT_STRUCTURE_DESCRIPTIONS.monthly,
+    icon: Banknote,
+    color: "text-accent-foreground",
     example: "e.g., ₦150,000/month",
   },
   {
-    value: "base_commission",
-    label: "Base + Commission",
-    description: "Fixed base salary plus percentage of revenue",
-    icon: TrendingUp,
-    color: "text-accent-foreground",
-    example: "e.g., ₦50,000 + 15% of revenue",
+    value: "custom",
+    label: PAYMENT_STRUCTURE_LABELS.custom,
+    description: PAYMENT_STRUCTURE_DESCRIPTIONS.custom,
+    icon: Settings,
+    color: "text-muted-foreground",
+    example: "Define your own terms",
   },
 ];
 
@@ -90,16 +97,18 @@ const PaymentStructureSelector = ({
     const newTerms: PaymentTerms = { structure };
     
     switch (structure) {
-      case "revenue_share":
-        newTerms.revenueSharePercentage = value.revenueSharePercentage || 30;
+      case "per_batch":
+        newTerms.perBatchAmount = value.perBatchAmount || 20000;
         break;
-      case "fixed_salary":
-        newTerms.fixedSalaryAmount = value.fixedSalaryAmount || 100000;
-        newTerms.salaryFrequency = value.salaryFrequency || "monthly";
+      case "per_student":
+        newTerms.perStudentAmount = value.perStudentAmount || 2000;
         break;
-      case "base_commission":
-        newTerms.baseSalaryAmount = value.baseSalaryAmount || 50000;
-        newTerms.commissionPercentage = value.commissionPercentage || 15;
+      case "monthly":
+        newTerms.monthlyAmount = value.monthlyAmount || 100000;
+        break;
+      case "custom":
+        newTerms.customDescription = value.customDescription || "";
+        newTerms.customAmount = value.customAmount || 0;
         break;
     }
     
@@ -119,7 +128,7 @@ const PaymentStructureSelector = ({
             <Info className="h-4 w-4 text-muted-foreground cursor-help" />
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">
-            <p>Choose how the instructor will be compensated. This can be changed later if both parties agree.</p>
+            <p>Choose how you will compensate the instructor. Payments are handled directly by you, not the platform.</p>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -174,101 +183,90 @@ const PaymentStructureSelector = ({
                       exit={{ opacity: 0, height: 0 }}
                       className="mt-4 pt-4 border-t border-border"
                     >
-                      {option.value === "revenue_share" && (
+                      {option.value === "per_batch" && (
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm">Revenue Share Percentage</Label>
-                            <span className="text-lg font-bold text-primary">
-                              {value.revenueSharePercentage || 30}%
-                            </span>
-                          </div>
-                          <Slider
-                            value={[value.revenueSharePercentage || 30]}
-                            onValueChange={([val]) => updateTerms({ revenueSharePercentage: val })}
-                            min={10}
-                            max={50}
-                            step={5}
-                            className="py-2"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>10%</span>
-                            <span>50%</span>
+                          <div className="space-y-2">
+                            <Label className="text-sm">Amount per Batch (₦)</Label>
+                            <Input
+                              type="number"
+                              value={value.perBatchAmount || 20000}
+                              onChange={(e) => updateTerms({ perBatchAmount: Number(e.target.value) })}
+                              placeholder="20000"
+                            />
                           </div>
                           <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                            Instructor will earn ₦{((value.revenueSharePercentage || 30) * 100).toLocaleString()} 
-                            {" "}for every ₦10,000 enrollment
+                            Instructor earns ₦{(value.perBatchAmount || 20000).toLocaleString()} for each batch they teach
                           </p>
                         </div>
                       )}
 
-                      {option.value === "fixed_salary" && (
-                        <div className="space-y-4">
+                      {option.value === "per_student" && (
+                        <div className="space-y-3">
                           <div className="space-y-2">
-                            <Label className="text-sm">Salary Amount (₦)</Label>
+                            <Label className="text-sm">Amount per Student (₦)</Label>
                             <Input
                               type="number"
-                              value={value.fixedSalaryAmount || 100000}
-                              onChange={(e) => updateTerms({ fixedSalaryAmount: Number(e.target.value) })}
+                              value={value.perStudentAmount || 2000}
+                              onChange={(e) => updateTerms({ perStudentAmount: Number(e.target.value) })}
+                              placeholder="2000"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                            With 20 students in a batch, instructor earns ₦{((value.perStudentAmount || 2000) * 20).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+
+                      {option.value === "monthly" && (
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label className="text-sm">Monthly Salary (₦)</Label>
+                            <Input
+                              type="number"
+                              value={value.monthlyAmount || 100000}
+                              onChange={(e) => updateTerms({ monthlyAmount: Number(e.target.value) })}
                               placeholder="100000"
                             />
                           </div>
+                          <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                            Fixed monthly payment of ₦{(value.monthlyAmount || 100000).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+
+                      {option.value === "custom" && (
+                        <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label className="text-sm">Payment Frequency</Label>
-                            <Select
-                              value={value.salaryFrequency || "monthly"}
-                              onValueChange={(val: 'monthly' | 'weekly' | 'per_course') => 
-                                updateTerms({ salaryFrequency: val })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="weekly">Weekly</SelectItem>
-                                <SelectItem value="monthly">Monthly</SelectItem>
-                                <SelectItem value="per_course">Per Course</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Label className="text-sm">Custom Amount (₦)</Label>
+                            <Input
+                              type="number"
+                              value={value.customAmount || 0}
+                              onChange={(e) => updateTerms({ customAmount: Number(e.target.value) })}
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm">Agreement Details</Label>
+                            <Textarea
+                              value={value.customDescription || ""}
+                              onChange={(e) => updateTerms({ customDescription: e.target.value })}
+                              placeholder="Describe the custom payment arrangement..."
+                              rows={3}
+                            />
                           </div>
                         </div>
                       )}
 
-                      {option.value === "base_commission" && (
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label className="text-sm">Base Salary (₦/month)</Label>
-                            <Input
-                              type="number"
-                              value={value.baseSalaryAmount || 50000}
-                              onChange={(e) => updateTerms({ baseSalaryAmount: Number(e.target.value) })}
-                              placeholder="50000"
-                            />
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <Label className="text-sm">Commission Percentage</Label>
-                              <span className="font-bold text-primary">
-                                {value.commissionPercentage || 15}%
-                              </span>
-                            </div>
-                            <Slider
-                              value={[value.commissionPercentage || 15]}
-                              onValueChange={([val]) => updateTerms({ commissionPercentage: val })}
-                              min={5}
-                              max={30}
-                              step={5}
-                              className="py-2"
-                            />
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>5%</span>
-                              <span>30%</span>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                            Total: ₦{(value.baseSalaryAmount || 50000).toLocaleString()}/month + {value.commissionPercentage || 15}% of revenue
-                          </p>
-                        </div>
-                      )}
+                      {/* Notes field for all structures */}
+                      <div className="mt-4 space-y-2">
+                        <Label className="text-sm">Additional Notes (Optional)</Label>
+                        <Textarea
+                          value={value.notes || ""}
+                          onChange={(e) => updateTerms({ notes: e.target.value })}
+                          placeholder="Any additional payment notes..."
+                          rows={2}
+                        />
+                      </div>
                     </motion.div>
                   )}
                 </CardContent>
@@ -276,6 +274,12 @@ const PaymentStructureSelector = ({
             </motion.div>
           );
         })}
+      </div>
+
+      {/* Platform Note */}
+      <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+        💡 <strong>Note:</strong> Payments are handled directly by you (school owner). 
+        This platform tracks payment agreements for record-keeping only.
       </div>
     </div>
   );

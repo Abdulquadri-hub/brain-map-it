@@ -1,15 +1,21 @@
 /**
- * Instructor Types for Teach LMS
+ * Instructor Types for Teach LMS V3
  * 
  * Laravel Inertia.js Integration:
  * These types should match the Laravel Eloquent models:
  * - App\Models\Instructor
  * - App\Models\InstructorAgreement
- * - App\Models\InstructorPayout
+ * - App\Models\InstructorPayment
+ * 
+ * V3 Changes:
+ * - Simplified payment structures: per_batch, per_student, monthly, custom
+ * - Removed revenue_share and base_commission (platform doesn't process payments)
+ * - Added batch assignments
+ * - Note: Payments are handled directly by school owner, not platform
  */
 
-// Payment structure types
-export type PaymentStructure = 'revenue_share' | 'fixed_salary' | 'base_commission';
+// Simplified payment structure types for V3
+export type PaymentStructure = 'per_batch' | 'per_student' | 'monthly' | 'custom';
 
 export type InstructorStatus = 'active' | 'pending' | 'inactive';
 
@@ -23,14 +29,17 @@ export type InstructorPermission =
 
 export interface PaymentTerms {
   structure: PaymentStructure;
-  // Revenue Share
-  revenueSharePercentage?: number; // 10-50%
-  // Fixed Salary
-  fixedSalaryAmount?: number;
-  salaryFrequency?: 'monthly' | 'weekly' | 'per_course';
-  // Base + Commission
-  baseSalaryAmount?: number;
-  commissionPercentage?: number;
+  // Per Batch Payment
+  perBatchAmount?: number;
+  // Per Student Payment
+  perStudentAmount?: number;
+  // Monthly Salary
+  monthlyAmount?: number;
+  // Custom Agreement
+  customDescription?: string;
+  customAmount?: number;
+  // Payment notes
+  notes?: string;
 }
 
 export interface InstructorAgreement {
@@ -39,7 +48,7 @@ export interface InstructorAgreement {
   schoolId: string;
   paymentTerms: PaymentTerms;
   permissions: InstructorPermission[];
-  assignedCourses: string[]; // Course IDs
+  assignedBatches: string[]; // Batch IDs (changed from courses)
   startDate: string;
   endDate?: string;
   status: 'active' | 'pending' | 'terminated';
@@ -60,7 +69,7 @@ export interface Instructor {
   joinDate: string;
   // School-specific data (for current school context)
   department?: string;
-  courses: number;
+  batches: number; // Active batches count
   students: number;
   agreement?: InstructorAgreement;
   // Multi-school data
@@ -73,41 +82,29 @@ export interface SchoolAssociation {
   schoolLogo?: string;
   role: 'instructor' | 'lead_instructor';
   agreement: InstructorAgreement;
+  // Payment tracking (for display only - school handles actual payments)
   totalEarnings: number;
-  pendingPayout: number;
-  coursesCount: number;
+  pendingPayment: number;
+  batchesCount: number;
   studentsCount: number;
 }
 
-export interface InstructorPayout {
+// Track instructor payments (for record keeping - not processing)
+export interface InstructorPayment {
   id: string;
   instructorId: string;
   schoolId: string;
   amount: number;
   currency: string;
-  period: string; // e.g., "January 2024"
-  breakdown: PayoutBreakdown;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  period: string; // e.g., "January 2024" or "Batch: JSS2 Math Jan 2024"
+  description: string;
+  status: 'pending' | 'paid';
   paidAt?: string;
   createdAt: string;
-}
-
-export interface PayoutBreakdown {
-  grossRevenue: number;
-  platformFee: number; // 10%
-  instructorShare: number;
-  // For base + commission
-  baseSalary?: number;
-  commission?: number;
-  // Deductions
-  deductions: PayoutDeduction[];
-  netAmount: number;
-}
-
-export interface PayoutDeduction {
-  type: string;
-  description: string;
-  amount: number;
+  // Reference info
+  batchId?: string;
+  batchName?: string;
+  studentCount?: number;
 }
 
 // Instructor Hub aggregated data (cross-tenant)
@@ -115,9 +112,9 @@ export interface InstructorHubData {
   instructor: Instructor;
   totalSchools: number;
   totalEarnings: number;
-  pendingPayouts: number;
+  pendingPayments: number;
   totalStudents: number;
-  totalCourses: number;
+  totalBatches: number;
   upcomingSessions: UpcomingSession[];
   recentActivity: ActivityItem[];
   schoolSummaries: SchoolSummary[];
@@ -127,6 +124,8 @@ export interface UpcomingSession {
   id: string;
   schoolId: string;
   schoolName: string;
+  batchId: string;
+  batchName: string;
   courseId: string;
   courseName: string;
   scheduledAt: string;
@@ -137,7 +136,7 @@ export interface UpcomingSession {
 
 export interface ActivityItem {
   id: string;
-  type: 'enrollment' | 'completion' | 'submission' | 'message' | 'payout';
+  type: 'enrollment' | 'completion' | 'submission' | 'message' | 'payment';
   schoolId: string;
   schoolName: string;
   description: string;
@@ -154,9 +153,9 @@ export interface SchoolSummary {
     total: number;
   };
   students: number;
-  courses: number;
+  batches: number;
   pendingTasks: number;
-  nextPayout?: {
+  nextPayment?: {
     amount: number;
     date: string;
   };
@@ -170,14 +169,14 @@ export interface InstructorInvitation {
   department: string;
   paymentTerms: PaymentTerms;
   permissions: InstructorPermission[];
-  assignedCourses: string[];
+  assignedBatches: string[];
   message?: string;
 }
 
 // Default values
 export const DEFAULT_PAYMENT_TERMS: PaymentTerms = {
-  structure: 'revenue_share',
-  revenueSharePercentage: 30,
+  structure: 'per_batch',
+  perBatchAmount: 20000,
 };
 
 export const DEFAULT_PERMISSIONS: InstructorPermission[] = [
@@ -188,10 +187,24 @@ export const DEFAULT_PERMISSIONS: InstructorPermission[] = [
 ];
 
 export const PERMISSION_LABELS: Record<InstructorPermission, string> = {
-  upload_content: 'Upload course content',
+  upload_content: 'Upload course materials',
   host_live_sessions: 'Host live sessions',
-  grade_assignments: 'Grade assignments & quizzes',
+  grade_assignments: 'Grade assignments',
   manage_enrollments: 'Manage student enrollments',
-  view_analytics: 'View course analytics',
+  view_analytics: 'View batch analytics',
   message_students: 'Message students directly',
+};
+
+export const PAYMENT_STRUCTURE_LABELS: Record<PaymentStructure, string> = {
+  per_batch: 'Per Batch',
+  per_student: 'Per Student',
+  monthly: 'Monthly Salary',
+  custom: 'Custom Agreement',
+};
+
+export const PAYMENT_STRUCTURE_DESCRIPTIONS: Record<PaymentStructure, string> = {
+  per_batch: 'Fixed amount per batch taught',
+  per_student: 'Amount per enrolled student',
+  monthly: 'Fixed monthly salary',
+  custom: 'Custom payment arrangement',
 };
