@@ -18,6 +18,7 @@ export type SubmissionStatus = "pending" | "submitted" | "graded" | "late";
 export interface Batch {
   id: string;
   courseId: string;
+  courseName?: string;
   name: string; // "January 2025 Batch"
   description?: string;
   startDate: string;
@@ -26,7 +27,10 @@ export interface Batch {
   currentEnrollment: number;
   status: BatchStatus;
   instructorId?: string;
+  instructorName?: string;
   whatsAppLink?: string;
+  whatsAppGroupName?: string;
+  whatsAppQRCode?: string;
   meetingLink?: string;
   createdAt: string;
   updatedAt: string;

@@ -42,9 +42,9 @@ interface SessionCardProps {
 }
 
 const platformConfig: Record<LivePlatform, { name: string; color: string; icon: string }> = {
-  google_meet: { name: "Google Meet", color: "bg-green-500", icon: "🎥" },
+  jitsi: { name: "Jitsi Meet", color: "bg-orange-500", icon: "🎥" },
   zoom: { name: "Zoom", color: "bg-blue-500", icon: "📹" },
-  teams: { name: "Teams", color: "bg-purple-500", icon: "💬" },
+  custom: { name: "Custom", color: "bg-gray-500", icon: "🔗" },
 };
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
