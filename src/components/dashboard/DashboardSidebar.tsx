@@ -8,7 +8,8 @@ import {
   BarChart3, 
   Settings,
   LogOut,
-  School
+  School,
+  UsersRound
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,8 +27,9 @@ import {
 
 const mainMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Students", url: "/dashboard/students", icon: Users },
   { title: "Courses", url: "/dashboard/courses", icon: BookOpen },
+  { title: "Batches", url: "/dashboard/batches", icon: UsersRound },
+  { title: "Students", url: "/dashboard/students", icon: Users },
   { title: "Instructors", url: "/dashboard/instructors", icon: GraduationCap },
   { title: "Live Sessions", url: "/dashboard/live-sessions", icon: Video },
   { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },

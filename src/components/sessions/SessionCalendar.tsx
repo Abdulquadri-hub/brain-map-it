@@ -34,9 +34,9 @@ interface SessionCalendarProps {
 }
 
 const platformColors: Record<LivePlatform, string> = {
-  google_meet: "bg-green-500",
+  jitsi: "bg-orange-500",
   zoom: "bg-blue-500",
-  teams: "bg-purple-500",
+  custom: "bg-gray-500",
 };
 
 const statusColors: Record<string, string> = {

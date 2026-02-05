@@ -4,7 +4,23 @@
 
 export type SessionStatus = "scheduled" | "live" | "completed" | "cancelled";
 export type AttendanceStatus = "present" | "absent" | "late" | "excused";
-export type LivePlatform = "google_meet" | "zoom" | "teams";
+export type LivePlatform = "jitsi" | "zoom" | "custom";
+
+// Secure session link for token-based access control
+export interface SecureSessionLink {
+  id: string;
+  sessionId: string;
+  batchId: string;
+  token: string;           // Unique cryptographic token
+  userId: string;
+  userType: "student" | "instructor";
+  generatedAt: string;
+  validFrom: string;       // 15 min before session
+  validUntil: string;      // 30 min after session end
+  usedAt?: string;         // When first accessed
+  isUsed: boolean;
+  ipAddress?: string;      // Track for security
+}
 
 export interface LiveSession {
   id: string;

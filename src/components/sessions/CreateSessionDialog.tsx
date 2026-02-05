@@ -45,9 +45,9 @@ interface CreateSessionDialogProps {
 }
 
 const platformOptions: { value: LivePlatform; label: string; icon: string }[] = [
-  { value: "google_meet", label: "Google Meet", icon: "🎥" },
+  { value: "jitsi", label: "Jitsi Meet", icon: "🎥" },
   { value: "zoom", label: "Zoom", icon: "📹" },
-  { value: "teams", label: "Microsoft Teams", icon: "💬" },
+  { value: "custom", label: "Custom/Other", icon: "🔗" },
 ];
 
 const durationOptions = [
@@ -84,7 +84,7 @@ export function CreateSessionDialog({
   const [title, setTitle] = useState(editSession?.title || "");
   const [description, setDescription] = useState(editSession?.description || "");
   const [courseId, setCourseId] = useState(editSession?.courseId || "");
-  const [platform, setPlatform] = useState<LivePlatform>(editSession?.platform || "google_meet");
+  const [platform, setPlatform] = useState<LivePlatform>(editSession?.platform || "jitsi");
   const [date, setDate] = useState<Date | undefined>(
     editSession ? new Date(editSession.scheduledAt) : undefined
   );
@@ -115,9 +115,9 @@ export function CreateSessionDialog({
       
       // Mock generated link based on platform
       const mockLinks: Record<LivePlatform, string> = {
-        google_meet: "https://meet.google.com/abc-defg-hij",
+        jitsi: "https://meet.jit.si/teach-session-abc123",
         zoom: "https://zoom.us/j/1234567890",
-        teams: "https://teams.microsoft.com/l/meetup-join/...",
+        custom: "https://your-meeting-platform.com/room/abc",
       };
       
       setMeetingLink(mockLinks[platform]);

@@ -15,6 +15,8 @@ import CoursesPage from "./pages/dashboard/CoursesPage";
 import CourseBuilderPage from "./pages/dashboard/CourseBuilderPage";
 import InstructorsPage from "./pages/dashboard/InstructorsPage";
 import LiveSessionsPage from "./pages/dashboard/LiveSessionsPage";
+import BatchesPage from "./pages/dashboard/BatchesPage";
+import BatchDetailPage from "./pages/dashboard/BatchDetailPage";
 import ReportsPage from "./pages/dashboard/ReportsPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import LoginPage from "./pages/auth/LoginPage";
@@ -65,11 +67,13 @@ const App = () => (
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<DashboardHome />} />
-                <Route path="students" element={<StudentsPage />} />
                 <Route path="courses" element={<CoursesPage />} />
                 <Route path="courses/:courseId/edit" element={<CourseBuilderPage />} />
                 <Route path="courses/new" element={<CourseBuilderPage />} />
+                <Route path="batches" element={<BatchesPage />} />
+                <Route path="batches/:batchId" element={<BatchDetailPage />} />
                 <Route path="instructors" element={<InstructorsPage />} />
+                <Route path="students" element={<StudentsPage />} />
                 <Route path="live-sessions" element={<LiveSessionsPage />} />
                 <Route path="enrollments" element={<EnrollmentRequestsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
