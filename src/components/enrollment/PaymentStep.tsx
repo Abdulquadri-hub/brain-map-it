@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { CreditCard, Building2, Smartphone, Loader2, BookOpen, Video } from "lucide-react";
+import { CreditCard, Building2, Smartphone, Loader2 } from "lucide-react";
 import { EnrollmentData } from "@/pages/enrollment/EnrollmentPage";
 
 // Laravel Inertia.js Integration:
@@ -29,17 +28,14 @@ interface Course {
   id: string;
   title: string;
   price: number;
-  selfPacedPrice?: number;
-  liveClassPrice?: number;
-  learningType: "self_paced" | "live_classes" | "hybrid";
 }
 
 const mockCourses: Course[] = [
-  { id: "1", title: "Advanced Mathematics", price: 25000, selfPacedPrice: 15000, liveClassPrice: 25000, learningType: "hybrid" },
-  { id: "2", title: "English Language & Literature", price: 20000, selfPacedPrice: 12000, liveClassPrice: 20000, learningType: "hybrid" },
-  { id: "3", title: "Physics Fundamentals", price: 22000, learningType: "live_classes" },
-  { id: "4", title: "Chemistry Basics", price: 18000, learningType: "self_paced" },
-  { id: "5", title: "Biology for Beginners", price: 20000, selfPacedPrice: 12000, liveClassPrice: 20000, learningType: "hybrid" },
+  { id: "1", title: "Advanced Mathematics", price: 25000 },
+  { id: "2", title: "English Language & Literature", price: 20000 },
+  { id: "3", title: "Physics Fundamentals", price: 22000 },
+  { id: "4", title: "Chemistry Basics", price: 18000 },
+  { id: "5", title: "Biology for Beginners", price: 20000 },
 ];
 
 interface PaymentStepProps {
@@ -66,25 +62,9 @@ const PaymentStep = ({
     courses.find((c) => c.id === id)
   ).filter(Boolean) as Course[];
 
-  // Calculate price based on selected learning type
-  const getPrice = (course: Course) => {
-    if (course.learningType === "hybrid" && enrollmentData.selectedLearningType) {
-      return enrollmentData.selectedLearningType === "self_paced"
-        ? (course.selfPacedPrice || course.price)
-        : (course.liveClassPrice || course.price);
-    }
-    return course.price;
-  };
-
-  const subtotal = selectedCourseDetails.reduce((sum, course) => sum + getPrice(course), 0);
+  const subtotal = selectedCourseDetails.reduce((sum, course) => sum + course.price, 0);
   const processingFee = Math.round(subtotal * 0.015); // 1.5% processing fee
   const total = subtotal + processingFee;
-
-  const getLearningTypeLabel = () => {
-    if (enrollmentData.selectedLearningType === "self_paced") return "Self-Paced";
-    if (enrollmentData.selectedLearningType === "live_classes") return "Live Classes";
-    return null;
-  };
 
   const handlePayment = async () => {
     setIsProcessing(true);
@@ -238,24 +218,10 @@ const PaymentStep = ({
               <CardTitle className="text-lg">Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Learning Type Badge */}
-              {getLearningTypeLabel() && (
-                <div className="flex items-center gap-2 pb-2">
-                  <Badge variant="outline" className="text-primary border-primary">
-                    {enrollmentData.selectedLearningType === "self_paced" ? (
-                      <BookOpen className="h-3 w-3 mr-1" />
-                    ) : (
-                      <Video className="h-3 w-3 mr-1" />
-                    )}
-                    {getLearningTypeLabel()}
-                  </Badge>
-                </div>
-              )}
-              
               {selectedCourseDetails.map((course) => (
                 <div key={course.id} className="flex justify-between text-sm">
                   <span>{course.title}</span>
-                  <span>₦{getPrice(course).toLocaleString()}</span>
+                  <span>₦{course.price.toLocaleString()}</span>
                 </div>
               ))}
               <Separator />
