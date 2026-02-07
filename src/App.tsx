@@ -19,6 +19,9 @@ import BatchesPage from "./pages/dashboard/BatchesPage";
 import BatchDetailPage from "./pages/dashboard/BatchDetailPage";
 import ReportsPage from "./pages/dashboard/ReportsPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
+import ComplaintsPage from "./pages/dashboard/ComplaintsPage";
+import CertificatesPage from "./pages/dashboard/CertificatesPage";
+import FinancialDashboardPage from "./pages/dashboard/FinancialDashboardPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import SchoolSelectorPage from "./pages/auth/SchoolSelectorPage";
@@ -76,6 +79,9 @@ const App = () => (
                 <Route path="students" element={<StudentsPage />} />
                 <Route path="live-sessions" element={<LiveSessionsPage />} />
                 <Route path="enrollments" element={<EnrollmentRequestsPage />} />
+                <Route path="complaints" element={<ComplaintsPage />} />
+                <Route path="certificates" element={<CertificatesPage />} />
+                <Route path="financials" element={<FinancialDashboardPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>

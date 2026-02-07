@@ -12,7 +12,7 @@
  */
 
 export type CourseStatus = "draft" | "active" | "archived";
-export type LivePlatform = "google_meet" | "zoom" | "teams";
+export type LivePlatform = "jitsi" | "zoom" | "custom";
 export type AcademicLevel = 
   | "primary_1" | "primary_2" | "primary_3" | "primary_4" | "primary_5" | "primary_6"
   | "jss_1" | "jss_2" | "jss_3"
@@ -164,9 +164,9 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
 };
 
 export const PLATFORM_LABELS: Record<LivePlatform, string> = {
-  google_meet: "Google Meet",
+  jitsi: "Jitsi Meet",
   zoom: "Zoom",
-  teams: "Microsoft Teams",
+  custom: "Custom Platform",
 };
 
 // Default values
@@ -174,7 +174,7 @@ export const DEFAULT_LIVE_SESSION: LiveSessionConfig = {
   dayOfWeek: "saturday",
   time: "10:00",
   duration: 90,
-  platform: "google_meet",
+  platform: "jitsi",
   timezone: "Africa/Lagos",
 };
 

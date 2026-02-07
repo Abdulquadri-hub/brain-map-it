@@ -101,9 +101,9 @@ const daysOfWeek: { value: DayOfWeek; label: string }[] = [
 ];
 
 const platforms: { value: LivePlatform; label: string }[] = [
-  { value: "google_meet", label: "Google Meet" },
+  { value: "jitsi", label: "Jitsi Meet" },
   { value: "zoom", label: "Zoom" },
-  { value: "teams", label: "Microsoft Teams" },
+  { value: "custom", label: "Custom Platform" },
 ];
 
 const mockInstructors = [
@@ -133,13 +133,13 @@ const CourseBuilderPage = () => {
       dayOfWeek: "saturday",
       time: "10:00",
       duration: 90,
-      platform: "google_meet",
+      platform: "jitsi",
       timezone: "Africa/Lagos",
     } : {
       dayOfWeek: "saturday",
       time: "10:00",
       duration: 90,
-      platform: "google_meet",
+      platform: "jitsi",
       timezone: "Africa/Lagos",
     },
     whatsApp: { enabled: true, groupLink: "" },
