@@ -4,11 +4,11 @@ import {
   BarChart3, 
   TrendingUp, 
   Users, 
-  BookOpen, 
+  Wallet,
   Download,
   Calendar,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,49 +31,28 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
+import { MOCK_REVENUE_DATA, MOCK_ENROLLMENT_TREND, MOCK_BATCHES, MOCK_INSTRUCTORS } from "@/data/mock-data";
 
-const enrollmentData = [
-  { month: "Jan", students: 150 },
-  { month: "Feb", students: 180 },
-  { month: "Mar", students: 210 },
-  { month: "Apr", students: 245 },
-  { month: "May", students: 280 },
-  { month: "Jun", students: 310 },
-  { month: "Jul", students: 290 },
-  { month: "Aug", students: 350 },
-  { month: "Sep", students: 420 },
-  { month: "Oct", students: 480 },
-  { month: "Nov", students: 520 },
-  { month: "Dec", students: 550 },
+/**
+ * ReportsPage - V3 Batch-Based Analytics
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive report data from ReportController@index
+ * - Replace mock data with Inertia props
+ */
+
+const batchPerformance = [
+  { name: "Jan 2025 - Math JSS1", attendance: 92, completion: 85, students: 25 },
+  { name: "Feb 2025 - English P5", attendance: 88, completion: 78, students: 18 },
+  { name: "Mar 2025 - WebDev", attendance: 95, completion: 90, students: 20 },
+  { name: "Dec 2024 - Physics SSS2", attendance: 82, completion: 96, students: 28 },
 ];
 
-const coursePerformanceData = [
-  { name: "Mathematics", completion: 87, students: 120 },
-  { name: "English", completion: 92, students: 95 },
-  { name: "Science", completion: 78, students: 145 },
-  { name: "History", completion: 85, students: 60 },
-  { name: "Technology", completion: 95, students: 85 },
-  { name: "Arts", completion: 88, students: 40 },
-];
-
-const gradeDistribution = [
-  { name: "A", value: 25, color: "hsl(var(--primary))" },
-  { name: "B", value: 35, color: "hsl(var(--secondary))" },
-  { name: "C", value: 25, color: "hsl(var(--muted))" },
-  { name: "D", value: 10, color: "hsl(var(--border))" },
-  { name: "F", value: 5, color: "hsl(var(--destructive))" },
-];
-
-const topCourses = [
-  { name: "Computer Science Basics", students: 52, rating: 4.9 },
-  { name: "Introduction to Mathematics", students: 45, rating: 4.7 },
-  { name: "English Literature", students: 32, rating: 4.8 },
-  { name: "Physics Fundamentals", students: 28, rating: 4.6 },
-  { name: "World History", students: 38, rating: 4.5 },
+const instructorPayments = [
+  { name: "Dr. Sarah Johnson", courses: 2, totalOwed: 120000, paid: 80000, pending: 40000 },
+  { name: "Mrs. Adaeze Okonkwo", courses: 1, totalOwed: 45000, paid: 45000, pending: 0 },
+  { name: "Emmanuel Tech", courses: 1, totalOwed: 180000, paid: 120000, pending: 60000 },
 ];
 
 const ReportsPage = () => {
@@ -81,36 +60,36 @@ const ReportsPage = () => {
 
   const stats = [
     { 
-      title: "Total Enrollments", 
-      value: "1,234", 
-      change: "+12%", 
-      trend: "up",
-      icon: Users,
-      description: "vs last period"
+      title: "Total Revenue", 
+      value: "₦1.71M", 
+      change: "+18%", 
+      trend: "up" as const,
+      icon: Wallet,
+      description: "all time",
     },
     { 
-      title: "Course Completion", 
+      title: "Total Enrollments", 
+      value: "141", 
+      change: "+35", 
+      trend: "up" as const,
+      icon: Users,
+      description: "across all batches",
+    },
+    { 
+      title: "Batch Completion", 
       value: "87%", 
       change: "+5%", 
-      trend: "up",
-      icon: BookOpen,
-      description: "average rate"
-    },
-    { 
-      title: "Revenue", 
-      value: "₦2.4M", 
-      change: "+18%", 
-      trend: "up",
+      trend: "up" as const,
       icon: TrendingUp,
-      description: "this period"
+      description: "average rate",
     },
     { 
-      title: "Active Users", 
-      value: "847", 
-      change: "-3%", 
-      trend: "down",
+      title: "Avg Attendance", 
+      value: "89%", 
+      change: "-2%", 
+      trend: "down" as const,
       icon: BarChart3,
-      description: "daily average"
+      description: "across live sessions",
     },
   ];
 
@@ -120,7 +99,7 @@ const ReportsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Reports & Analytics</h1>
-          <p className="text-sm text-muted-foreground">Track your school's performance and insights.</p>
+          <p className="text-sm text-muted-foreground">Track batch performance, revenue, and enrollment trends.</p>
         </div>
         <div className="flex gap-3">
           <Select value={timeRange} onValueChange={setTimeRange}>
@@ -129,7 +108,6 @@ const ReportsPage = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="week">This Week</SelectItem>
               <SelectItem value="month">This Month</SelectItem>
               <SelectItem value="quarter">This Quarter</SelectItem>
               <SelectItem value="year">This Year</SelectItem>
@@ -179,40 +157,27 @@ const ReportsPage = () => {
         ))}
       </div>
 
-      {/* Charts Row 1 */}
+      {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Enrollment Trend */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        {/* Revenue Trend */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card>
             <CardHeader>
-              <CardTitle>Student Enrollment Trend</CardTitle>
-              <CardDescription>Monthly enrollment over the year</CardDescription>
+              <CardTitle>Revenue Trend (₦)</CardTitle>
+              <CardDescription>Monthly revenue from course enrollments</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={enrollmentData}>
+                  <LineChart data={MOCK_REVENUE_DATA}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `₦${(v/1000)}K`} />
                     <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
-                      }}
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                      formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="students" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--primary))" }}
-                    />
+                    <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))" }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -220,33 +185,24 @@ const ReportsPage = () => {
           </Card>
         </motion.div>
 
-        {/* Course Performance */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        {/* Enrollment Trend */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <Card>
             <CardHeader>
-              <CardTitle>Course Completion Rates</CardTitle>
-              <CardDescription>Completion percentage by course</CardDescription>
+              <CardTitle>Enrollment Trend</CardTitle>
+              <CardDescription>Monthly new enrollments across batches</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={coursePerformanceData} layout="vertical">
+                  <BarChart data={MOCK_ENROLLMENT_TREND}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
-                      }}
-                      formatter={(value) => [`${value}%`, "Completion"]}
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                     />
-                    <Bar dataKey="completion" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="enrollments" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -255,51 +211,39 @@ const ReportsPage = () => {
         </motion.div>
       </div>
 
-      {/* Charts Row 2 */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Grade Distribution */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
+      {/* Bottom Section */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Batch Performance */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <Card>
             <CardHeader>
-              <CardTitle>Grade Distribution</CardTitle>
-              <CardDescription>Overall student grades</CardDescription>
+              <CardTitle>Batch Performance</CardTitle>
+              <CardDescription>Attendance and completion rates by batch</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={gradeDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}%`}
-                    >
-                      {gradeDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex flex-wrap justify-center gap-3 mt-4">
-                {gradeDistribution.map((grade) => (
-                  <div key={grade.name} className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: grade.color }} />
-                    <span className="text-xs text-muted-foreground">{grade.name}: {grade.value}%</span>
+              <div className="space-y-4">
+                {batchPerformance.map((batch, index) => (
+                  <div key={batch.name} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-foreground">{batch.name}</p>
+                      <Badge variant="outline" className="text-xs">{batch.students} students</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">Attendance</span>
+                          <span className="font-medium text-foreground">{batch.attendance}%</span>
+                        </div>
+                        <Progress value={batch.attendance} className="h-1.5" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">Completion</span>
+                          <span className="font-medium text-foreground">{batch.completion}%</span>
+                        </div>
+                        <Progress value={batch.completion} className="h-1.5" />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -307,38 +251,34 @@ const ReportsPage = () => {
           </Card>
         </motion.div>
 
-        {/* Top Courses */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="lg:col-span-2"
-        >
+        {/* Instructor Payments */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
           <Card>
             <CardHeader>
-              <CardTitle>Top Performing Courses</CardTitle>
-              <CardDescription>Courses with highest enrollment and ratings</CardDescription>
+              <CardTitle>Instructor Payment Summary</CardTitle>
+              <CardDescription>Payment status for each instructor</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topCourses.map((course, index) => (
-                  <div key={course.name} className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                      {index + 1}
+                {instructorPayments.map((instructor) => (
+                  <div key={instructor.name} className="p-4 rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium text-foreground">{instructor.name}</p>
+                      <Badge variant="outline" className="text-xs">{instructor.courses} course{instructor.courses > 1 ? "s" : ""}</Badge>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium text-foreground">{course.name}</p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {course.students} students
-                          </Badge>
-                          <Badge className="bg-primary/10 text-primary border-primary/20">
-                            ★ {course.rating}
-                          </Badge>
-                        </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">Total Owed</p>
+                        <p className="font-medium text-foreground">₦{instructor.totalOwed.toLocaleString()}</p>
                       </div>
-                      <Progress value={(course.students / 60) * 100} className="h-1.5" />
+                      <div>
+                        <p className="text-muted-foreground">Paid</p>
+                        <p className="font-medium text-primary">₦{instructor.paid.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Pending</p>
+                        <p className="font-medium text-destructive">₦{instructor.pending.toLocaleString()}</p>
+                      </div>
                     </div>
                   </div>
                 ))}

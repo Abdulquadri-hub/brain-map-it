@@ -3,15 +3,11 @@ import { motion } from "framer-motion";
 import { 
   Users, 
   Search, 
-  Plus, 
-  MoreHorizontal, 
-  Mail, 
-  Phone,
-  Eye,
-  Pencil,
-  Trash2,
   Download,
-  Filter
+  Filter,
+  Eye,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,108 +15,68 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { MOCK_STUDENTS, MOCK_BATCHES } from "@/data/mock-data";
+import { ACADEMIC_LEVEL_LABELS, type AcademicLevel } from "@/types/course";
 
-interface Student {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  grade: string;
-  enrollmentDate: string;
-  status: "active" | "inactive" | "graduated";
-  coursesEnrolled: number;
-}
-
-const initialStudents: Student[] = [
-  { id: "1", name: "John Doe", email: "john.doe@email.com", phone: "+234 801 234 5678", grade: "Grade 10", enrollmentDate: "2024-01-15", status: "active", coursesEnrolled: 5 },
-  { id: "2", name: "Jane Smith", email: "jane.smith@email.com", phone: "+234 802 345 6789", grade: "Grade 11", enrollmentDate: "2024-02-20", status: "active", coursesEnrolled: 6 },
-  { id: "3", name: "Michael Johnson", email: "michael.j@email.com", phone: "+234 803 456 7890", grade: "Grade 9", enrollmentDate: "2024-03-10", status: "active", coursesEnrolled: 4 },
-  { id: "4", name: "Emily Brown", email: "emily.b@email.com", phone: "+234 804 567 8901", grade: "Grade 12", enrollmentDate: "2023-09-05", status: "graduated", coursesEnrolled: 8 },
-  { id: "5", name: "David Wilson", email: "david.w@email.com", phone: "+234 805 678 9012", grade: "Grade 10", enrollmentDate: "2024-01-20", status: "inactive", coursesEnrolled: 3 },
-  { id: "6", name: "Sarah Davis", email: "sarah.d@email.com", phone: "+234 806 789 0123", grade: "Grade 11", enrollmentDate: "2024-02-15", status: "active", coursesEnrolled: 5 },
-];
+/**
+ * StudentsPage - V3 Batch-Aware
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive students from StudentController@index
+ * - Students come through the enrollment flow, no manual "Add Student"
+ */
 
 const StudentsPage = () => {
-  const [students, setStudents] = useState<Student[]>(initialStudents);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [newStudent, setNewStudent] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    grade: "",
-  });
+  const [batchFilter, setBatchFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
+  const [selectedStudent, setSelectedStudent] = useState<typeof MOCK_STUDENTS[0] | null>(null);
 
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = MOCK_STUDENTS.filter((student) => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesBatch = batchFilter === "all" || student.batchId === batchFilter;
+    const matchesPayment = paymentFilter === "all" || student.paymentStatus === paymentFilter;
+    return matchesSearch && matchesBatch && matchesPayment;
   });
 
-  const handleAddStudent = () => {
-    const student: Student = {
-      id: Date.now().toString(),
-      ...newStudent,
-      enrollmentDate: new Date().toISOString().split("T")[0],
-      status: "active",
-      coursesEnrolled: 0,
-    };
-    setStudents([...students, student]);
-    setNewStudent({ name: "", email: "", phone: "", grade: "" });
-    setIsAddDialogOpen(false);
-    toast.success("Student added successfully!");
+  const getPaymentBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Paid</Badge>;
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Pending</Badge>;
+      case "failed":
+        return <Badge variant="destructive">Failed</Badge>;
+      default:
+        return null;
+    }
   };
 
-  const handleEditStudent = () => {
-    if (!selectedStudent) return;
-    setStudents(students.map((s) => (s.id === selectedStudent.id ? selectedStudent : s)));
-    setIsEditDialogOpen(false);
-    toast.success("Student updated successfully!");
-  };
-
-  const handleDeleteStudent = () => {
-    if (!selectedStudent) return;
-    setStudents(students.filter((s) => s.id !== selectedStudent.id));
-    setIsDeleteDialogOpen(false);
-    toast.success("Student deleted successfully!");
-  };
-
-  const getStatusBadge = (status: Student["status"]) => {
-    const variants = {
-      active: "bg-primary/10 text-primary border-primary/20",
-      inactive: "bg-muted text-muted-foreground border-border",
-      graduated: "bg-secondary/10 text-secondary border-secondary/20",
-    };
-    return <Badge variant="outline" className={variants[status]}>{status}</Badge>;
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Active</Badge>;
+      case "completed":
+        return <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/20">Completed</Badge>;
+      case "dropped":
+        return <Badge variant="outline" className="bg-muted text-muted-foreground border-border">Dropped</Badge>;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -129,21 +85,21 @@ const StudentsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Students</h1>
-          <p className="text-sm text-muted-foreground">Manage your student enrollment and records.</p>
+          <p className="text-sm text-muted-foreground">Students enrolled through the enrollment flow. Manage records and track progress.</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Student
+        <Button variant="outline" onClick={() => toast.info("Export feature coming with backend integration")}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Total Students", value: students.length, icon: Users },
-          { label: "Active", value: students.filter((s) => s.status === "active").length, color: "text-primary" },
-          { label: "Inactive", value: students.filter((s) => s.status === "inactive").length, color: "text-muted-foreground" },
-          { label: "Graduated", value: students.filter((s) => s.status === "graduated").length, color: "text-secondary" },
+          { label: "Total Students", value: MOCK_STUDENTS.length, icon: Users },
+          { label: "Active", value: MOCK_STUDENTS.filter(s => s.status === "active").length, color: "text-primary" },
+          { label: "Completed", value: MOCK_STUDENTS.filter(s => s.status === "completed").length, color: "text-secondary" },
+          { label: "Pending Payment", value: MOCK_STUDENTS.filter(s => s.paymentStatus !== "completed").length, color: "text-destructive" },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -174,22 +130,29 @@ const StudentsPage = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
+            <Select value={batchFilter} onValueChange={setBatchFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Filter by batch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="graduated">Graduated</SelectItem>
+                <SelectItem value="all">All Batches</SelectItem>
+                {MOCK_BATCHES.map(batch => (
+                  <SelectItem key={batch.id} value={batch.id}>{batch.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Payment status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Payments</SelectItem>
+                <SelectItem value="completed">Paid</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -198,7 +161,7 @@ const StudentsPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>Student List</CardTitle>
-          <CardDescription>A list of all students enrolled in your school.</CardDescription>
+          <CardDescription>Showing {filteredStudents.length} of {MOCK_STUDENTS.length} students</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -206,11 +169,12 @@ const StudentsPage = () => {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Student</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Grade</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Courses</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Course / Batch</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Level</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Parent</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Payment</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Enrolled</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -220,7 +184,7 @@ const StudentsPage = () => {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {student.name.split(" ").map((n) => n[0]).join("")}
+                            {student.name.split(" ").map(n => n[0]).join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -229,98 +193,51 @@ const StudentsPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-foreground">{student.grade}</td>
-                    <td className="py-3 px-4 text-sm text-foreground">{student.coursesEnrolled}</td>
+                    <td className="py-3 px-4">
+                      <p className="text-sm text-foreground">{student.courseName}</p>
+                      <p className="text-xs text-muted-foreground">{student.batchName}</p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge variant="outline" className="text-xs">
+                        {ACADEMIC_LEVEL_LABELS[student.academicLevel as AcademicLevel] || student.academicLevel}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      {student.parentName ? (
+                        <div>
+                          <p className="text-sm text-foreground">{student.parentName}</p>
+                          <p className="text-xs text-muted-foreground">{student.parentPhone}</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">N/A (Adult)</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">{getPaymentBadge(student.paymentStatus)}</td>
                     <td className="py-3 px-4">{getStatusBadge(student.status)}</td>
-                    <td className="py-3 px-4 text-sm text-muted-foreground">{student.enrollmentDate}</td>
                     <td className="py-3 px-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border border-border">
-                          <DropdownMenuItem onClick={() => { setSelectedStudent(student); setIsViewDialogOpen(true); }}>
-                            <Eye className="h-4 w-4 mr-2" /> View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSelectedStudent(student); setIsEditDialogOpen(true); }}>
-                            <Pencil className="h-4 w-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => { setSelectedStudent(student); setIsDeleteDialogOpen(true); }}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {filteredStudents.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No students found matching your filters.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Add Student Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Student</DialogTitle>
-            <DialogDescription>Enter the student's information below.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Full Name</Label>
-              <Input 
-                value={newStudent.name} 
-                onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} 
-                placeholder="John Doe"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input 
-                type="email"
-                value={newStudent.email} 
-                onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} 
-                placeholder="john@email.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input 
-                value={newStudent.phone} 
-                onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })} 
-                placeholder="+234 800 000 0000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Grade</Label>
-              <Select value={newStudent.grade} onValueChange={(value) => setNewStudent({ ...newStudent, grade: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"].map((grade) => (
-                    <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddStudent}>Add Student</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* View Student Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+      <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Student Details</DialogTitle>
@@ -330,15 +247,18 @@ const StudentsPage = () => {
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
                   <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                    {selectedStudent.name.split(" ").map((n) => n[0]).join("")}
+                    {selectedStudent.name.split(" ").map(n => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">{selectedStudent.name}</h3>
-                  {getStatusBadge(selectedStudent.status)}
+                  <div className="flex gap-2 mt-1">
+                    {getStatusBadge(selectedStudent.status)}
+                    {getPaymentBadge(selectedStudent.paymentStatus)}
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span className="text-foreground">{selectedStudent.email}</span>
@@ -350,92 +270,33 @@ const StudentsPage = () => {
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                 <div>
-                  <p className="text-sm text-muted-foreground">Grade</p>
-                  <p className="font-medium text-foreground">{selectedStudent.grade}</p>
+                  <p className="text-sm text-muted-foreground">Course</p>
+                  <p className="font-medium text-foreground">{selectedStudent.courseName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Courses Enrolled</p>
-                  <p className="font-medium text-foreground">{selectedStudent.coursesEnrolled}</p>
+                  <p className="text-sm text-muted-foreground">Batch</p>
+                  <p className="font-medium text-foreground">{selectedStudent.batchName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Enrollment Date</p>
-                  <p className="font-medium text-foreground">{selectedStudent.enrollmentDate}</p>
+                  <p className="text-sm text-muted-foreground">Academic Level</p>
+                  <p className="font-medium text-foreground">
+                    {ACADEMIC_LEVEL_LABELS[selectedStudent.academicLevel as AcademicLevel] || selectedStudent.academicLevel}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Enrolled</p>
+                  <p className="font-medium text-foreground">{selectedStudent.enrolledAt}</p>
                 </div>
               </div>
+              {selectedStudent.parentName && (
+                <div className="pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-2">Parent/Guardian</p>
+                  <p className="font-medium text-foreground">{selectedStudent.parentName}</p>
+                  <p className="text-sm text-muted-foreground">{selectedStudent.parentPhone}</p>
+                </div>
+              )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Student Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Student</DialogTitle>
-            <DialogDescription>Update the student's information.</DialogDescription>
-          </DialogHeader>
-          {selectedStudent && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input 
-                  value={selectedStudent.name} 
-                  onChange={(e) => setSelectedStudent({ ...selectedStudent, name: e.target.value })} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input 
-                  type="email"
-                  value={selectedStudent.email} 
-                  onChange={(e) => setSelectedStudent({ ...selectedStudent, email: e.target.value })} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input 
-                  value={selectedStudent.phone} 
-                  onChange={(e) => setSelectedStudent({ ...selectedStudent, phone: e.target.value })} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select 
-                  value={selectedStudent.status} 
-                  onValueChange={(value: Student["status"]) => setSelectedStudent({ ...selectedStudent, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="graduated">Graduated</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleEditStudent}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Student</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {selectedStudent?.name}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteStudent}>Delete</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

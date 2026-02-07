@@ -9,7 +9,11 @@ import {
   Settings,
   LogOut,
   School,
-  UsersRound
+  UsersRound,
+  ClipboardList,
+  MessageSquareWarning,
+  Award,
+  Wallet,
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,7 +36,14 @@ const mainMenuItems = [
   { title: "Students", url: "/dashboard/students", icon: Users },
   { title: "Instructors", url: "/dashboard/instructors", icon: GraduationCap },
   { title: "Live Sessions", url: "/dashboard/live-sessions", icon: Video },
+  { title: "Enrollments", url: "/dashboard/enrollments", icon: ClipboardList },
+];
+
+const managementMenuItems = [
+  { title: "Complaints", url: "/dashboard/complaints", icon: MessageSquareWarning },
+  { title: "Certificates", url: "/dashboard/certificates", icon: Award },
   { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
+  { title: "Financials", url: "/dashboard/financials", icon: Wallet },
 ];
 
 const settingsMenuItems = [
@@ -48,8 +59,8 @@ const DashboardSidebar = () => {
             <School className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <span className="font-display font-bold text-foreground">EduConnect</span>
-            <p className="text-xs text-muted-foreground">School Portal</p>
+            <span className="font-display font-bold text-foreground">Teach</span>
+            <p className="text-xs text-muted-foreground">School Dashboard</p>
           </div>
         </NavLink>
       </SidebarHeader>
@@ -67,6 +78,28 @@ const DashboardSidebar = () => {
                     <NavLink 
                       to={item.url} 
                       end={item.url === "/dashboard"}
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {managementMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
                       className="flex items-center gap-3"
                       activeClassName="bg-sidebar-accent text-primary font-medium"
                     >

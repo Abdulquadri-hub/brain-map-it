@@ -1,123 +1,111 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
+  UsersRound, 
   Users, 
-  BookOpen, 
-  GraduationCap, 
-  TrendingUp, 
-  Calendar, 
-  Settings, 
+  ClipboardList, 
+  Wallet, 
   Plus,
   ArrowUpRight,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Video,
+  BookOpen,
+  Calendar,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { MOCK_BATCHES, MOCK_STUDENTS, MOCK_UPCOMING_SESSIONS } from "@/data/mock-data";
 
-const stats = [
-  {
-    title: "Total Students",
-    value: "1,234",
-    change: "+12%",
-    trend: "up",
-    icon: Users,
-    color: "primary",
-    link: "/dashboard/students",
-  },
-  {
-    title: "Active Courses",
-    value: "48",
-    change: "+3",
-    trend: "up",
-    icon: BookOpen,
-    color: "secondary",
-    link: "/dashboard/courses",
-  },
-  {
-    title: "Instructors",
-    value: "24",
-    change: "+2",
-    trend: "up",
-    icon: GraduationCap,
-    color: "primary",
-    link: "/dashboard/instructors",
-  },
-  {
-    title: "Completion Rate",
-    value: "87%",
-    change: "+5%",
-    trend: "up",
-    icon: TrendingUp,
-    color: "secondary",
-    link: "/dashboard/reports",
-  },
-];
-
-const quickActions = [
-  { label: "Add New Course", icon: Plus, href: "/dashboard/courses?action=add" },
-  { label: "Invite Instructor", icon: Users, href: "/dashboard/instructors?action=add" },
-  { label: "View Calendar", icon: Calendar, href: "/dashboard/reports" },
-  { label: "Settings", icon: Settings, href: "/dashboard/settings" },
-];
-
-const recentActivities = [
-  {
-    id: 1,
-    title: "New student enrollment",
-    description: "John Doe enrolled in 'Introduction to Mathematics'",
-    time: "5 minutes ago",
-    status: "success",
-  },
-  {
-    id: 2,
-    title: "Course completed",
-    description: "15 students completed 'English Literature'",
-    time: "1 hour ago",
-    status: "success",
-  },
-  {
-    id: 3,
-    title: "Payment received",
-    description: "Monthly subscription payment processed",
-    time: "2 hours ago",
-    status: "success",
-  },
-  {
-    id: 4,
-    title: "Assignment pending review",
-    description: "8 assignments awaiting instructor review",
-    time: "3 hours ago",
-    status: "warning",
-  },
-];
-
-const upcomingEvents = [
-  {
-    id: 1,
-    title: "Staff Meeting",
-    date: "Today, 2:00 PM",
-    type: "meeting",
-  },
-  {
-    id: 2,
-    title: "Parent-Teacher Conference",
-    date: "Tomorrow, 10:00 AM",
-    type: "event",
-  },
-  {
-    id: 3,
-    title: "Final Exams Begin",
-    date: "Dec 15, 2024",
-    type: "exam",
-  },
-];
+/**
+ * DashboardHome - V3 Batch-Aware
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive dashboard stats from DashboardController@index
+ * - Replace mock data with Inertia props
+ */
 
 const DashboardHome = () => {
   const navigate = useNavigate();
+
+  const activeBatches = MOCK_BATCHES.filter(b => b.status === "active" || b.status === "open").length;
+  const totalStudents = MOCK_STUDENTS.length;
+  const pendingPayments = MOCK_STUDENTS.filter(s => s.paymentStatus === "pending").length;
+
+  const stats = [
+    {
+      title: "Active Batches",
+      value: activeBatches.toString(),
+      change: "+1",
+      icon: UsersRound,
+      color: "primary",
+      link: "/dashboard/batches",
+    },
+    {
+      title: "Enrolled Students",
+      value: totalStudents.toString(),
+      change: "+8",
+      icon: Users,
+      color: "secondary",
+      link: "/dashboard/students",
+    },
+    {
+      title: "Pending Enrollments",
+      value: "3",
+      change: "+2",
+      icon: ClipboardList,
+      color: "primary",
+      link: "/dashboard/enrollments",
+    },
+    {
+      title: "Monthly Revenue",
+      value: "₦425K",
+      change: "+18%",
+      icon: Wallet,
+      color: "secondary",
+      link: "/dashboard/financials",
+    },
+  ];
+
+  const quickActions = [
+    { label: "Create Course", icon: BookOpen, href: "/dashboard/courses/new" },
+    { label: "Create Batch", icon: Plus, href: "/dashboard/batches" },
+    { label: "View Enrollments", icon: ClipboardList, href: "/dashboard/enrollments" },
+    { label: "Live Sessions", icon: Video, href: "/dashboard/live-sessions" },
+  ];
+
+  const recentActivities = [
+    {
+      id: 1,
+      title: "New enrollment request",
+      description: "Chidera Okonkwo enrolled in Mathematics for JSS1 - January 2025 Batch",
+      time: "5 minutes ago",
+      status: "success" as const,
+    },
+    {
+      id: 2,
+      title: "Batch completed",
+      description: "December 2024 Batch - Physics for SSS2 completed with 28 students",
+      time: "1 hour ago",
+      status: "success" as const,
+    },
+    {
+      id: 3,
+      title: "Payment received",
+      description: "₦45,000 received from Emmanuel Nwachukwu for Web Development Bootcamp",
+      time: "2 hours ago",
+      status: "success" as const,
+    },
+    {
+      id: 4,
+      title: "Payment pending",
+      description: "Blessing Okoro has not completed payment for Web Development Bootcamp",
+      time: "3 hours ago",
+      status: "warning" as const,
+    },
+  ];
 
   return (
     <div className="p-6">
@@ -148,7 +136,7 @@ const DashboardHome = () => {
                     <div className="flex items-center gap-1 mt-2">
                       <ArrowUpRight className="h-3 w-3 text-primary" />
                       <span className="text-xs text-primary font-medium">{stat.change}</span>
-                      <span className="text-xs text-muted-foreground">vs last month</span>
+                      <span className="text-xs text-muted-foreground">this month</span>
                     </div>
                   </div>
                   <div className={`p-3 rounded-lg ${stat.color === "primary" ? "bg-primary/10" : "bg-secondary/10"}`}>
@@ -216,83 +204,64 @@ const DashboardHome = () => {
                       <p className="text-sm font-medium text-foreground">{activity.title}</p>
                       <p className="text-sm text-muted-foreground truncate">{activity.description}</p>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
                       <Clock className="h-3 w-3" />
                       {activity.time}
                     </div>
                   </div>
                 ))}
               </div>
-              <Button variant="ghost" className="w-full mt-4 text-primary hover:text-primary">
-                View All Activity
-              </Button>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Sidebar */}
+        {/* Upcoming Sessions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="space-y-6"
         >
-          {/* Upcoming Events */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Upcoming Events</CardTitle>
+              <CardTitle className="text-lg">Upcoming Sessions</CardTitle>
+              <CardDescription>Next live classes across batches</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {upcomingEvents.map((event) => (
+                {MOCK_UPCOMING_SESSIONS.map((session) => (
                   <div
-                    key={event.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors"
+                    key={session.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors cursor-pointer"
+                    onClick={() => navigate("/dashboard/live-sessions")}
                   >
                     <div className="p-2 rounded-lg bg-primary/10">
-                      <Calendar className="h-4 w-4 text-primary" />
+                      <Video className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{event.title}</p>
-                      <p className="text-xs text-muted-foreground">{event.date}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{session.title}</p>
+                      <p className="text-xs text-muted-foreground">{session.courseName}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(session.scheduledAt).toLocaleDateString("en-NG", { weekday: "short", month: "short", day: "numeric" })}
+                          {" · "}
+                          {new Date(session.scheduledAt).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {event.type}
+                      {session.platform}
                     </Badge>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Platform Usage */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Platform Usage</CardTitle>
-              <CardDescription>This month's activity</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Storage Used</span>
-                  <span className="font-medium text-foreground">2.4 GB / 10 GB</span>
-                </div>
-                <Progress value={24} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Active Users</span>
-                  <span className="font-medium text-foreground">847 / 1,000</span>
-                </div>
-                <Progress value={84} className="h-2" />
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Courses Created</span>
-                  <span className="font-medium text-foreground">48 / 100</span>
-                </div>
-                <Progress value={48} className="h-2" />
-              </div>
+              <Button 
+                variant="ghost" 
+                className="w-full mt-4 text-primary hover:text-primary"
+                onClick={() => navigate("/dashboard/live-sessions")}
+              >
+                View All Sessions
+              </Button>
             </CardContent>
           </Card>
         </motion.div>

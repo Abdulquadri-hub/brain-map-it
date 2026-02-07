@@ -20,9 +20,23 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
+  ShieldCheck,
 } from "lucide-react";
 import SchoolModal, { School } from "@/components/landing/SchoolModal";
 import Footer from "@/components/landing/Footer";
+import { Badge } from "@/components/ui/badge";
+
+/**
+ * Marketplace - School Discovery with Verification Badges
+ * 
+ * Laravel Inertia.js Integration:
+ * - Use usePage() to receive schools from MarketplaceController@index
+ * - Replace allSchools with Inertia props
+ */
+
+interface MarketplaceSchool extends School {
+  verified?: boolean;
+}
 
 const categories = [
   "All Categories",
@@ -49,7 +63,7 @@ const locations = [
   "Dar es Salaam, TZ",
 ];
 
-const allSchools: School[] = [
+const allSchools: MarketplaceSchool[] = [
   {
     name: "Bright Stars Academy",
     category: "Primary Education",
@@ -61,6 +75,7 @@ const allSchools: School[] = [
     description: "Premier primary education institution dedicated to nurturing young minds.",
     instructors: 15,
     established: "2019",
+    verified: true,
   },
   {
     name: "Tech Academy Nigeria",
@@ -73,6 +88,7 @@ const allSchools: School[] = [
     description: "Leading coding bootcamp transforming beginners into job-ready developers.",
     instructors: 22,
     established: "2018",
+    verified: true,
   },
   {
     name: "Excel Learning Hub",
@@ -85,6 +101,7 @@ const allSchools: School[] = [
     description: "Empowering entrepreneurs with practical business skills.",
     instructors: 18,
     established: "2020",
+    verified: false,
   },
   {
     name: "Lingua Africa",
@@ -97,6 +114,7 @@ const allSchools: School[] = [
     description: "Immersive language courses connecting cultures through communication.",
     instructors: 25,
     established: "2017",
+    verified: true,
   },
   {
     name: "STEM Excellence Hub",
@@ -109,6 +127,7 @@ const allSchools: School[] = [
     description: "Preparing the next generation of African scientists and engineers.",
     instructors: 20,
     established: "2019",
+    verified: true,
   },
   {
     name: "Creative Arts Academy",
@@ -121,6 +140,7 @@ const allSchools: School[] = [
     description: "Nurturing artistic talent across graphic design and digital art.",
     instructors: 14,
     established: "2021",
+    verified: false,
   },
   {
     name: "Code Masters Academy",
@@ -133,6 +153,7 @@ const allSchools: School[] = [
     description: "Specialized in iOS and Android app development training.",
     instructors: 16,
     established: "2020",
+    verified: false,
   },
   {
     name: "Data Insights Africa",
@@ -145,6 +166,7 @@ const allSchools: School[] = [
     description: "Comprehensive data science and analytics training programs.",
     instructors: 19,
     established: "2019",
+    verified: true,
   },
   {
     name: "Future Leaders Academy",
@@ -157,6 +179,7 @@ const allSchools: School[] = [
     description: "Preparing students for university and beyond with excellence.",
     instructors: 35,
     established: "2016",
+    verified: true,
   },
   {
     name: "Wellness Institute Africa",
@@ -169,6 +192,7 @@ const allSchools: School[] = [
     description: "Holistic health and wellness certification programs.",
     instructors: 12,
     established: "2021",
+    verified: false,
   },
   {
     name: "African Business School",
@@ -181,6 +205,7 @@ const allSchools: School[] = [
     description: "Executive education and MBA programs for African leaders.",
     instructors: 21,
     established: "2018",
+    verified: true,
   },
   {
     name: "Digital Arts Studio",
@@ -193,6 +218,7 @@ const allSchools: School[] = [
     description: "Animation, 3D modeling, and digital illustration courses.",
     instructors: 11,
     established: "2020",
+    verified: false,
   },
 ];
 
@@ -209,7 +235,6 @@ const Marketplace = () => {
   const filteredAndSortedSchools = useMemo(() => {
     let result = [...allSchools];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -220,17 +245,14 @@ const Marketplace = () => {
       );
     }
 
-    // Category filter
     if (categoryFilter !== "All Categories") {
       result = result.filter((school) => school.category === categoryFilter);
     }
 
-    // Location filter
     if (locationFilter !== "All Locations") {
       result = result.filter((school) => school.location === locationFilter);
     }
 
-    // Sort
     switch (sortBy) {
       case "rating":
         result.sort((a, b) => b.rating - a.rating);
@@ -272,10 +294,7 @@ const Marketplace = () => {
     <>
       <Helmet>
         <title>Marketplace - Discover Schools | Teach LMS</title>
-        <meta
-          name="description"
-          content="Browse thousands of schools and courses on Teach. Find the perfect learning experience across Africa."
-        />
+        <meta name="description" content="Browse thousands of schools and courses on Teach. Find the perfect learning experience across Africa." />
       </Helmet>
 
       {/* Header */}
@@ -286,9 +305,7 @@ const Marketplace = () => {
               <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center shadow-md group-hover:shadow-glow transition-shadow duration-300">
                 <GraduationCap className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-xl text-foreground">
-                Teach
-              </span>
+              <span className="font-display font-bold text-xl text-foreground">Teach</span>
             </Link>
             <Link to="/">
               <Button variant="ghost" size="sm">
@@ -313,63 +330,31 @@ const Marketplace = () => {
             </p>
           </div>
 
-          {/* Filters & Search */}
+          {/* Filters */}
           <div className="bg-card border border-border rounded-2xl p-4 md:p-6 mb-8">
             <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Search schools, categories, or locations..."
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                   className="pl-10 h-12 bg-background"
                 />
               </div>
-
-              {/* Filters */}
               <div className="flex flex-wrap gap-3">
-                <Select
-                  value={categoryFilter}
-                  onValueChange={(value) => {
-                    setCategoryFilter(value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[180px] h-12 bg-background">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
+                <Select value={categoryFilter} onValueChange={(value) => { setCategoryFilter(value); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[180px] h-12 bg-background"><SelectValue placeholder="Category" /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
+                    {categories.map((cat) => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
                   </SelectContent>
                 </Select>
-
-                <Select
-                  value={locationFilter}
-                  onValueChange={(value) => {
-                    setLocationFilter(value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[180px] h-12 bg-background">
-                    <SelectValue placeholder="Location" />
-                  </SelectTrigger>
+                <Select value={locationFilter} onValueChange={(value) => { setLocationFilter(value); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[180px] h-12 bg-background"><SelectValue placeholder="Location" /></SelectTrigger>
                   <SelectContent>
-                    {locations.map((loc) => (
-                      <SelectItem key={loc} value={loc}>
-                        {loc}
-                      </SelectItem>
-                    ))}
+                    {locations.map((loc) => (<SelectItem key={loc} value={loc}>{loc}</SelectItem>))}
                   </SelectContent>
                 </Select>
-
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[160px] h-12 bg-background">
                     <SlidersHorizontal className="w-4 h-4 mr-2" />
@@ -382,25 +367,13 @@ const Marketplace = () => {
                     <SelectItem value="name">Name (A-Z)</SelectItem>
                   </SelectContent>
                 </Select>
-
-                <Button variant="outline" onClick={resetFilters} className="h-12">
-                  Reset
-                </Button>
+                <Button variant="outline" onClick={resetFilters} className="h-12">Reset</Button>
               </div>
             </div>
-
-            {/* Results count */}
             <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing{" "}
-                <span className="font-medium text-foreground">
-                  {paginatedSchools.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-medium text-foreground">
-                  {filteredAndSortedSchools.length}
-                </span>{" "}
-                schools
+                Showing <span className="font-medium text-foreground">{paginatedSchools.length}</span> of{" "}
+                <span className="font-medium text-foreground">{filteredAndSortedSchools.length}</span> schools
               </p>
             </div>
           </div>
@@ -414,27 +387,25 @@ const Marketplace = () => {
                   onClick={() => setSelectedSchool(school)}
                   className="group rounded-2xl bg-card border border-border overflow-hidden hover:shadow-lg hover:border-secondary/30 transition-all duration-300 cursor-pointer"
                 >
-                  {/* Image */}
                   <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={school.image}
-                      alt={school.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                    <img src={school.image} alt={school.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                       <span className="inline-block px-3 py-1 rounded-full bg-secondary/90 text-secondary-foreground text-xs font-medium">
                         {school.category}
                       </span>
+                      {school.verified && (
+                        <Badge className="bg-primary/90 text-primary-foreground border-0 gap-1">
+                          <ShieldCheck className="h-3 w-3" />
+                          Verified
+                        </Badge>
+                      )}
                     </div>
                   </div>
-
-                  {/* Content */}
                   <div className="p-6">
                     <h3 className="font-display font-bold text-xl text-foreground mb-2 group-hover:text-secondary transition-colors">
                       {school.name}
                     </h3>
-
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
@@ -445,15 +416,12 @@ const Marketplace = () => {
                         {school.rating}
                       </div>
                     </div>
-
                     <div className="flex items-center justify-between pt-4 border-t border-border">
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Users className="w-4 h-4" />
                         {school.students.toLocaleString()} students
                       </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {school.courses} courses
-                      </span>
+                      <span className="text-sm font-medium text-foreground">{school.courses} courses</span>
                     </div>
                   </div>
                 </div>
@@ -461,9 +429,7 @@ const Marketplace = () => {
             </div>
           ) : (
             <div className="text-center py-20 bg-card border border-border rounded-2xl">
-              <p className="text-xl text-muted-foreground mb-4">
-                No schools found matching your criteria
-              </p>
+              <p className="text-xl text-muted-foreground mb-4">No schools found matching your criteria</p>
               <Button onClick={resetFilters}>Clear Filters</Button>
             </div>
           )}
@@ -471,15 +437,9 @@ const Marketplace = () => {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
+              <Button variant="outline" size="icon" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <Button
                   key={page}
@@ -491,13 +451,7 @@ const Marketplace = () => {
                   {page}
                 </Button>
               ))}
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
+              <Button variant="outline" size="icon" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -507,12 +461,7 @@ const Marketplace = () => {
 
       <Footer />
 
-      {/* School Detail Modal */}
-      <SchoolModal
-        isOpen={!!selectedSchool}
-        onClose={() => setSelectedSchool(null)}
-        school={selectedSchool}
-      />
+      <SchoolModal isOpen={!!selectedSchool} onClose={() => setSelectedSchool(null)} school={selectedSchool} />
     </>
   );
 };
