@@ -49,7 +49,7 @@ const mockCourse: Partial<Course> = {
     dayOfWeek: "saturday",
     time: "10:00",
     duration: 90,
-    platform: "google_meet",
+    platform: "jitsi",
     timezone: "Africa/Lagos",
   },
   whatsApp: {
@@ -266,8 +266,8 @@ const CourseLearningPage = () => {
                       {batch.nextSession.time} • {course.liveSession?.duration || 90} minutes
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Via {course.liveSession?.platform === "google_meet" ? "Google Meet" : 
-                           course.liveSession?.platform === "zoom" ? "Zoom" : "Microsoft Teams"}
+                      Via {course.liveSession?.platform === "jitsi" ? "Jitsi Meet" : 
+                           course.liveSession?.platform === "zoom" ? "Zoom" : "Custom Platform"}
                     </p>
                   </div>
                   <Button size="lg" asChild>
