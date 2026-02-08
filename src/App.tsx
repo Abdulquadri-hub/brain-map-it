@@ -33,19 +33,16 @@ import CourseLearningPage from "./pages/learn/CourseLearningPage";
 import MyCoursesPage from "./pages/learn/MyCoursesPage";
 import NotFound from "./pages/NotFound";
 
-// Laravel Inertia.js Integration:
-// Replace BrowserRouter with Inertia's routing:
-// import { createInertiaApp } from '@inertiajs/react'
-// 
-// createInertiaApp({
-//   resolve: name => {
-//     const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true })
-//     return pages[`./Pages/${name}.tsx`]
-//   },
-//   setup({ el, App, props }) {
-//     createRoot(el).render(<App {...props} />)
-//   },
-// })
+// Instructor Dashboard
+import InstructorLayout from "./components/instructor/InstructorLayout";
+import InstructorDashboard from "./pages/instructor/InstructorDashboard";
+import InstructorBatchesPage from "./pages/instructor/InstructorBatchesPage";
+import InstructorBatchDetailPage from "./pages/instructor/InstructorBatchDetailPage";
+import InstructorGradingPage from "./pages/instructor/InstructorGradingPage";
+import InstructorSessionsPage from "./pages/instructor/InstructorSessionsPage";
+import InstructorEarningsPage from "./pages/instructor/InstructorEarningsPage";
+import InstructorApplicationsPage from "./pages/instructor/InstructorApplicationsPage";
+import InstructorProfilePage from "./pages/instructor/InstructorProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +64,7 @@ const App = () => (
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/select-school" element={<SchoolSelectorPage />} />
               
-              {/* Dashboard Routes */}
+              {/* School Owner Dashboard Routes */}
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<DashboardHome />} />
                 <Route path="courses" element={<CoursesPage />} />
@@ -84,6 +81,18 @@ const App = () => (
                 <Route path="financials" element={<FinancialDashboardPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+              </Route>
+
+              {/* Instructor Dashboard Routes */}
+              <Route path="/instructor" element={<InstructorLayout />}>
+                <Route index element={<InstructorDashboard />} />
+                <Route path="batches" element={<InstructorBatchesPage />} />
+                <Route path="batch/:batchId" element={<InstructorBatchDetailPage />} />
+                <Route path="grading" element={<InstructorGradingPage />} />
+                <Route path="sessions" element={<InstructorSessionsPage />} />
+                <Route path="earnings" element={<InstructorEarningsPage />} />
+                <Route path="applications" element={<InstructorApplicationsPage />} />
+                <Route path="profile" element={<InstructorProfilePage />} />
               </Route>
               
               {/* Student Learning Routes */}
