@@ -1,317 +1,308 @@
 
 
-# Instructor Dashboard - Complete Implementation Plan
+# Student & Parent Dashboard - Complete Implementation Plan
 
 ## Overview
 
-The Instructor Dashboard is a separate area (`/instructor`) where instructors manage their teaching activities across multiple schools. It mirrors the school owner dashboard pattern but is focused on the instructor's perspective: their assigned batches, upcoming sessions, student grading, earnings tracking, and job applications.
+Students and parents each get a dedicated dashboard under `/student` and `/parent` route prefixes. The Student Dashboard is where students see their enrolled batches, attend live sessions, view materials, submit assignments, and track progress. The Parent Dashboard gives parents visibility into their children's activities -- attendance, grades, payments, and upcoming sessions.
+
+Both dashboards follow the same layout pattern as the School Owner (`/dashboard`) and Instructor (`/instructor`) dashboards: a sidebar layout using `SidebarProvider`, header with user menu, and `Outlet` for page content.
 
 ---
 
-## What the Instructor Sees
-
-An instructor can belong to multiple schools. When they log in, they land on an aggregated hub showing data from all schools, with the ability to drill into each school or batch individually.
-
-### Dashboard Structure
+## How Students & Parents Relate to Existing Data
 
 ```text
-/instructor
-  |-- (index) InstructorDashboard      -- Aggregated hub across all schools
-  |-- /school/:schoolId                -- School-specific view
-  |-- /batch/:batchId                  -- Batch detail (students, grading, sessions)
-  |-- /grading                         -- All pending submissions to grade
-  |-- /applications                    -- Job portal applications tracking
-  |-- /profile                         -- Public tutor profile management
-  |-- /earnings                        -- Earnings breakdown across schools
+Student (enrolled via EnrollmentPage)
+  |
+  +-- Batch 1 (Mathematics JSS1 - Jan 2025)
+  |     +-- Materials (PDFs, links from Course)
+  |     +-- Live Sessions (join via SecureJoinButton)
+  |     +-- Assignments (view, submit)
+  |     +-- Leaderboard (see rank)
+  |     +-- WhatsApp Group (join link)
+  |     +-- Certificate (on completion)
+  |
+  +-- Batch 2 (English Primary 5 - Feb 2025)
+        +-- ...
+
+Parent
+  |
+  +-- Child 1 (Chidera Okonkwo)
+  |     +-- Batch enrollments (read-only view)
+  |     +-- Attendance reports
+  |     +-- Grade/leaderboard position
+  |     +-- Payment receipts
+  |
+  +-- Child 2 (optional, for multi-child parents)
 ```
 
 ---
 
-## Part 1: Instructor Layout and Navigation
+## Part 1: Student Dashboard
 
-### InstructorLayout (`src/components/instructor/InstructorLayout.tsx`)
+### StudentLayout (`src/components/student/StudentLayout.tsx`)
 
-A dedicated layout similar to `DashboardLayout.tsx` but with instructor-specific sidebar and branding.
+Same pattern as `InstructorLayout.tsx`:
+- Sidebar branding: "Teach" with "Student Portal" subtitle
+- Header with notification bell and user menu
+- No school switcher needed (students belong to one school per enrollment)
 
-- Sidebar branding: "Teach" with "Instructor Hub" subtitle
-- School switcher in the header (reuses existing `SchoolSwitcher` component)
-- Notification bell
-- User menu with logout
-
-### InstructorSidebar (`src/components/instructor/InstructorSidebar.tsx`)
-
-Sidebar navigation items:
+### StudentSidebar (`src/components/student/StudentSidebar.tsx`)
 
 | Menu Item | Route | Icon |
 |-----------|-------|------|
-| Hub | /instructor | LayoutDashboard |
-| My Batches | /instructor/batches | UsersRound |
-| Grading | /instructor/grading | ClipboardCheck |
-| Live Sessions | /instructor/sessions | Video |
-| Earnings | /instructor/earnings | Wallet |
-| Job Portal | /instructor/applications | Briefcase |
-| My Profile | /instructor/profile | User |
+| Dashboard | /student | LayoutDashboard |
+| My Batches | /student/batches | UsersRound |
+| Live Sessions | /student/sessions | Video |
+| Assignments | /student/assignments | FileText |
+| Certificates | /student/certificates | Award |
+| Complaints | /student/complaints | MessageSquareWarning |
 
----
+### StudentDashboard (`src/pages/student/StudentDashboard.tsx`)
 
-## Part 2: Instructor Dashboard Hub (`/instructor`)
+Landing page with:
+- **Stats Cards:** Active Batches, Upcoming Sessions, Pending Assignments, Overall Rank
+- **Next Live Session card** with join button (reuses `SecureJoinButton`)
+- **Active Batches summary** -- batch name, course, progress (sessions completed / total), instructor name
+- **Recent Assignments** -- latest 3 pending or graded assignments
+- **Leaderboard snippet** -- student's rank across their batches
 
-### Page: `src/pages/instructor/InstructorDashboard.tsx`
+### StudentBatchesPage (`src/pages/student/StudentBatchesPage.tsx`)
 
-The main landing page showing an aggregated view across all schools.
-
-**Stats Cards:**
-- Total Schools (number of schools they teach at)
-- Active Batches (across all schools)
-- Total Students (across all batches)
-- Pending Earnings (total unpaid amount)
-
-**School Summary Cards:**
-Each school the instructor belongs to gets a summary card showing:
-- School name, logo
-- Number of batches assigned
-- Number of students
-- Earnings this month / total
-- Next upcoming session
-- "View School" button to drill in
-
-**Upcoming Sessions (next 5):**
-- Session title, batch name, school name
-- Date/time, platform
-- "Join" button with SecureJoinButton component
-
-**Recent Activity:**
-- New enrollments in their batches
-- Assignment submissions received
-- Payments received
-- Messages from students
-
-Uses mock data consistent with the shared `MOCK_BATCHES` and `MOCK_COURSES` from `src/data/mock-data.ts`, extended with instructor-specific data.
-
----
-
-## Part 3: Instructor Batch Management
-
-### Page: `src/pages/instructor/InstructorBatchesPage.tsx` (`/instructor/batches`)
-
-Lists all batches assigned to the instructor across all schools, with school filter.
-
-- Batch cards showing: batch name, course name, school name, student count, status
-- WhatsApp group card (visible because instructor is assigned)
-- Filter by school, status
+List all enrolled batches:
+- Batch card: course name, batch name, instructor, dates, status, sessions progress
 - Click navigates to batch detail
+- Filter by status (active, completed)
 
-### Page: `src/pages/instructor/InstructorBatchDetailPage.tsx` (`/instructor/batch/:batchId`)
+### StudentBatchDetailPage (`src/pages/student/StudentBatchDetailPage.tsx`)
 
-Instructor's view of a specific batch with tabs:
+Single batch view with tabs:
+- **Overview:** Batch info, progress bar, WhatsApp group link, next session
+- **Materials:** Course materials list (PDFs, links, videos) -- download/open
+- **Sessions:** All sessions with status, "Join" button for upcoming, attendance record for past
+- **Assignments:** List of assignments with due date, submission status, grade if graded; submit button opens upload dialog
+- **Leaderboard:** Full batch leaderboard with student highlighted
 
-**Overview Tab:**
-- Batch info (name, course, dates, status)
-- Student count / enrollment progress
-- WhatsApp group card
-- Upcoming sessions for this batch
+### StudentSessionsPage (`src/pages/student/StudentSessionsPage.tsx`)
 
-**Students Tab:**
-- Student list with attendance rate, current grade, last submission status
-- Click on student to see their progress detail
+Aggregated view of all sessions across batches:
+- Upcoming, completed tabs
+- Join button for upcoming sessions (SecureJoinButton)
+- Attendance history
 
-**Sessions Tab:**
-- List of sessions for this batch
-- "Start Session" button (generates secure link)
-- "Schedule Session" button
-- Attendance tracking for completed sessions (uses existing `AttendanceTracker` component)
+### StudentAssignmentsPage (`src/pages/student/StudentAssignmentsPage.tsx`)
 
-**Grading Tab:**
-- Pending submissions for this batch
-- Grade submission interface (score + feedback)
-- Previously graded submissions
+All assignments across batches:
+- Filter by batch, status (pending, submitted, graded, late)
+- Table: assignment title, batch, due date, status, grade
+- Submit button opens submission dialog (text + file upload placeholder)
 
-**Leaderboard Tab:**
-- Same leaderboard component from school owner view
-- Read-only for instructors
+### StudentCertificatesPage (`src/pages/student/StudentCertificatesPage.tsx`)
 
----
+List of earned certificates:
+- Certificate cards: course name, batch, grade, issue date, verification code
+- Download button
+- Empty state for students with no completed batches
 
-## Part 4: Grading Hub
+### StudentComplaintsPage (`src/pages/student/StudentComplaintsPage.tsx`)
 
-### Page: `src/pages/instructor/InstructorGradingPage.tsx` (`/instructor/grading`)
-
-A centralized view of all pending assignments across all batches.
-
-- Filter by school, batch, assignment
-- Table: Student name, batch, assignment title, submitted date, status
-- "Grade" button opens grading dialog
-- Grading dialog: view submission, enter score (out of total), write feedback, save
-- Stats: Total pending, graded this week, average grade given
+Submit and track complaints:
+- "New Complaint" button with form (category, subject, description)
+- List of submitted complaints with status
+- View responses from school owner
 
 ---
 
-## Part 5: Live Sessions (Instructor View)
+## Part 2: Parent Dashboard
 
-### Page: `src/pages/instructor/InstructorSessionsPage.tsx` (`/instructor/sessions`)
+### ParentLayout (`src/components/parent/ParentLayout.tsx`)
 
-All sessions the instructor is responsible for, across schools.
+Same sidebar layout pattern. If a parent has multiple children, a child switcher appears in the header.
 
-- Calendar view and list view toggle
-- Filter by school, batch
-- "Start Session" generates secure link (reuses `SecureJoinButton`)
-- "Take Attendance" opens `AttendanceTracker` component after session
-- Upcoming, live, completed tabs
+### ParentSidebar (`src/components/parent/ParentSidebar.tsx`)
 
----
+| Menu Item | Route | Icon |
+|-----------|-------|------|
+| Dashboard | /parent | LayoutDashboard |
+| My Children | /parent/children | Users |
+| Attendance | /parent/attendance | CalendarCheck |
+| Grades | /parent/grades | BarChart3 |
+| Payments | /parent/payments | Wallet |
+| Complaints | /parent/complaints | MessageSquareWarning |
 
-## Part 6: Earnings Dashboard
+### ParentDashboard (`src/pages/parent/ParentDashboard.tsx`)
 
-### Page: `src/pages/instructor/InstructorEarningsPage.tsx` (`/instructor/earnings`)
+Overview across all children:
+- **Child cards:** name, current batches, attendance rate, latest grade
+- **Upcoming Sessions** for all children
+- **Payment Summary:** total paid, pending
+- **Quick Actions:** View grades, pay fees, submit complaint
 
-Tracks earnings across all schools (display only -- school handles actual payments).
+### ParentChildrenPage (`src/pages/parent/ParentChildrenPage.tsx`)
 
-**Summary Cards:**
-- Total Earnings (all time)
-- This Month
-- Pending Payments
-- Schools Teaching At
+List of enrolled children:
+- Each child shows: name, enrolled batches, overall attendance, latest leaderboard rank
+- Click to see child detail (same as student batch view but read-only)
 
-**Earnings Chart:**
-- Monthly earnings trend (last 6 months)
-- Stacked by school (different colors)
+### ParentAttendancePage (`src/pages/parent/ParentAttendancePage.tsx`)
 
-**Breakdown Table:**
-- School name, payment structure, amount, period, status (paid/pending)
-- Uses `InstructorPayment` type from `src/types/instructor.ts`
+Attendance records per child:
+- Child filter/switcher
+- Calendar heatmap or list showing present/absent/late per session
+- Overall attendance percentage
 
----
+### ParentGradesPage (`src/pages/parent/ParentGradesPage.tsx`)
 
-## Part 7: Job Applications Tracker
+Grade overview:
+- Child filter
+- Assignments with grades, batch leaderboard position
+- Performance trend (if multiple graded assignments)
 
-### Page: `src/pages/instructor/InstructorApplicationsPage.tsx` (`/instructor/applications`)
+### ParentPaymentsPage (`src/pages/parent/ParentPaymentsPage.tsx`)
 
-Track all job applications the instructor has submitted.
+Payment history:
+- All enrollment payments: child name, course, batch, amount, date, status
+- Receipt download
+- Pending payments highlighted
 
-- Application cards: job title, school name, applied date, status
-- Status badges: pending, reviewed, shortlisted, interview, offered, rejected, accepted
-- Filter by status
-- Interview details (if scheduled)
-- Uses `JobApplication` type from `src/types/job-portal.ts`
+### ParentComplaintsPage (`src/pages/parent/ParentComplaintsPage.tsx`)
 
----
-
-## Part 8: Tutor Profile
-
-### Page: `src/pages/instructor/InstructorProfilePage.tsx` (`/instructor/profile`)
-
-Manage the instructor's public profile for the job portal.
-
-**Sections:**
-- Personal info (name, email, phone, location, bio, avatar)
-- Specializations (subjects they teach)
-- Academic levels they cover
-- Experience history (institution, role, subjects, dates)
-- Education (degree, institution, year)
-- Certifications
-- Job preferences (job types, min salary, locations, remote preference)
-- Profile visibility toggle (public/private, open to opportunities)
-
-Uses `TutorProfile` type from `src/types/job-portal.ts`.
+Same as student complaints but submitted as parent type:
+- Submit complaint about any child's course/instructor
+- Track status and responses
 
 ---
 
-## Part 9: Mock Data for Instructor
+## Part 3: Mock Data Additions
 
-### Update: `src/data/mock-data.ts`
+### `src/data/mock-data.ts` updates
 
-Add instructor-specific mock data that stays consistent with existing courses/batches:
+Add student-perspective and parent-perspective mock data consistent with existing entities:
+
+**Student mock data (for student s-1: Chidera Okonkwo):**
+- Enrolled in batch-1 (Math JSS1 Jan 2025)
+- 3 assignments: 1 graded (85/100), 1 submitted, 1 pending
+- Attendance: 8/10 sessions present
+- Leaderboard rank: 4th out of 25
+- Parent: Mrs. Ngozi Okonkwo
+
+**Parent mock data (Mrs. Ngozi Okonkwo):**
+- Children: Chidera Okonkwo (batch-1), David Obi (batch-1)
+- Payment history: 2 payments completed (N15,000 each)
+- Can view attendance and grades for both children
+
+---
+
+## Part 4: Auth & Route Updates
+
+### AuthContext updates
+
+Add support for student and parent roles in mock login:
+- Student login returns role "student" with enrolled batches
+- Parent login returns role "parent" with children data
+
+### App.tsx route additions
 
 ```text
-MOCK_INSTRUCTOR_HUB_DATA:
-  - Instructor: Dr. Sarah Johnson (inst-1)
-  - Schools: Bright Stars Academy, Excel Learning Center
-  - Assigned Batches: batch-1 (Math JSS1), batch-4 (Physics SSS2)
-  - Earnings: This month N100,000, total N1,200,000
-  - Pending: N25,000 from Bright Stars
-  
-MOCK_INSTRUCTOR_PAYMENTS:
-  - Jan 2025: Bright Stars, batch-1, N25,000/batch, paid
-  - Jan 2025: Excel Center, Physics SSS2, N30,000/batch, pending
-  
-MOCK_INSTRUCTOR_SUBMISSIONS:
-  - 3 pending submissions from batch-1 students
-  - 2 pending from batch-4 students
+/student          -- StudentLayout
+  /               -- StudentDashboard
+  /batches        -- StudentBatchesPage
+  /batch/:batchId -- StudentBatchDetailPage
+  /sessions       -- StudentSessionsPage
+  /assignments    -- StudentAssignmentsPage
+  /certificates   -- StudentCertificatesPage
+  /complaints     -- StudentComplaintsPage
+
+/parent           -- ParentLayout
+  /               -- ParentDashboard
+  /children       -- ParentChildrenPage
+  /attendance     -- ParentAttendancePage
+  /grades         -- ParentGradesPage
+  /payments       -- ParentPaymentsPage
+  /complaints     -- ParentComplaintsPage
 ```
 
----
+### Existing pages to update/remove
 
-## Part 10: Auth Context Update
-
-### Update: `src/contexts/AuthContext.tsx`
-
-Update mock login to support instructor role with multi-school data:
-- When logging in, set role to "instructor" 
-- Include school associations with instructor role
-- This enables the school switcher and instructor-specific routing
+- `MyCoursesPage.tsx` and `CourseLearningPage.tsx` -- these old standalone pages will be replaced by the new Student Dashboard routes. The CourseLearningPage content is absorbed into `StudentBatchDetailPage`.
+- Update the old `/my-courses` and `/learn/:courseId/lesson/:lessonId` routes to redirect to `/student/batches`.
 
 ---
 
-## Files Summary
+## Part 5: Files Summary
 
-### Files to Create (10 files)
+### Files to Create (16 files)
 
 | File | Purpose |
 |------|---------|
-| `src/components/instructor/InstructorLayout.tsx` | Layout wrapper with sidebar |
-| `src/components/instructor/InstructorSidebar.tsx` | Instructor-specific navigation |
-| `src/pages/instructor/InstructorDashboard.tsx` | Aggregated hub dashboard |
-| `src/pages/instructor/InstructorBatchesPage.tsx` | All assigned batches |
-| `src/pages/instructor/InstructorBatchDetailPage.tsx` | Single batch (students, grading, sessions) |
-| `src/pages/instructor/InstructorGradingPage.tsx` | Centralized grading hub |
-| `src/pages/instructor/InstructorSessionsPage.tsx` | Sessions across schools |
-| `src/pages/instructor/InstructorEarningsPage.tsx` | Earnings tracking |
-| `src/pages/instructor/InstructorApplicationsPage.tsx` | Job application tracker |
-| `src/pages/instructor/InstructorProfilePage.tsx` | Tutor profile management |
+| `src/components/student/StudentLayout.tsx` | Student layout with sidebar |
+| `src/components/student/StudentSidebar.tsx` | Student navigation |
+| `src/pages/student/StudentDashboard.tsx` | Student hub dashboard |
+| `src/pages/student/StudentBatchesPage.tsx` | Enrolled batches list |
+| `src/pages/student/StudentBatchDetailPage.tsx` | Batch detail with materials, sessions, assignments, leaderboard |
+| `src/pages/student/StudentSessionsPage.tsx` | All sessions across batches |
+| `src/pages/student/StudentAssignmentsPage.tsx` | Assignment management |
+| `src/pages/student/StudentCertificatesPage.tsx` | Earned certificates |
+| `src/pages/student/StudentComplaintsPage.tsx` | Submit/track complaints |
+| `src/components/parent/ParentLayout.tsx` | Parent layout with sidebar |
+| `src/components/parent/ParentSidebar.tsx` | Parent navigation |
+| `src/pages/parent/ParentDashboard.tsx` | Parent overview |
+| `src/pages/parent/ParentChildrenPage.tsx` | Children list and detail |
+| `src/pages/parent/ParentAttendancePage.tsx` | Attendance tracking |
+| `src/pages/parent/ParentGradesPage.tsx` | Grades overview |
+| `src/pages/parent/ParentPaymentsPage.tsx` | Payment history |
+| `src/pages/parent/ParentComplaintsPage.tsx` | Parent complaints |
 
-### Files to Update (2 files)
+### Files to Update (3 files)
 
 | File | Changes |
 |------|---------|
-| `src/data/mock-data.ts` | Add instructor hub data, payments, submissions |
-| `src/App.tsx` | Add `/instructor` routes with `InstructorLayout` |
+| `src/data/mock-data.ts` | Add student assignments, attendance, parent/child mock data |
+| `src/contexts/AuthContext.tsx` | Add student/parent mock login support |
+| `src/App.tsx` | Add `/student` and `/parent` route groups, redirect old learn routes |
 
 ---
 
 ## Implementation Order
 
-1. Create `InstructorSidebar.tsx` -- navigation component
-2. Create `InstructorLayout.tsx` -- layout with sidebar, header, school switcher
-3. Update `mock-data.ts` -- add instructor-specific mock data
-4. Create `InstructorDashboard.tsx` -- aggregated hub page
-5. Create `InstructorBatchesPage.tsx` -- all assigned batches
-6. Create `InstructorBatchDetailPage.tsx` -- batch detail with grading/sessions tabs
-7. Create `InstructorGradingPage.tsx` -- centralized grading
-8. Create `InstructorSessionsPage.tsx` -- sessions view with secure join
-9. Create `InstructorEarningsPage.tsx` -- earnings tracking
-10. Create `InstructorApplicationsPage.tsx` -- job applications
-11. Create `InstructorProfilePage.tsx` -- tutor profile editor
-12. Update `App.tsx` -- register all instructor routes
+1. Create `StudentSidebar.tsx` and `StudentLayout.tsx`
+2. Create `ParentSidebar.tsx` and `ParentLayout.tsx`
+3. Update `mock-data.ts` with student/parent mock data (assignments, attendance, payments)
+4. Create `StudentDashboard.tsx`
+5. Create `StudentBatchesPage.tsx`
+6. Create `StudentBatchDetailPage.tsx` (materials, sessions, assignments, leaderboard tabs)
+7. Create `StudentSessionsPage.tsx`
+8. Create `StudentAssignmentsPage.tsx`
+9. Create `StudentCertificatesPage.tsx`
+10. Create `StudentComplaintsPage.tsx`
+11. Create `ParentDashboard.tsx`
+12. Create `ParentChildrenPage.tsx`
+13. Create `ParentAttendancePage.tsx`
+14. Create `ParentGradesPage.tsx`
+15. Create `ParentPaymentsPage.tsx`
+16. Create `ParentComplaintsPage.tsx`
+17. Update `AuthContext.tsx` -- add student/parent login support
+18. Update `App.tsx` -- add all new routes, redirect old learn routes
 
 ---
 
-## How It Syncs with School Owner Dashboard
+## Cross-Dashboard Data Sync
 
-| Data Point | School Owner Sees | Instructor Sees |
-|------------|-------------------|-----------------|
-| Batches | All batches in their school | Only batches assigned to them |
-| Students | All students across all batches | Only students in assigned batches |
-| Sessions | All sessions across all batches | Only sessions they are hosting |
-| Earnings | Total payroll to all instructors | Their own earnings from each school |
-| Grades | Read batch leaderboard | Grade and review submissions |
-| WhatsApp | All batch groups (can edit) | Assigned batch groups (view only) |
-| Complaints | Receive and manage complaints | Can submit complaints |
-| Certificates | Issue certificates | View certificates for their batches |
+| Data Point | School Owner | Instructor | Student | Parent |
+|------------|-------------|------------|---------|--------|
+| Batches | All (create/edit) | Assigned only | Enrolled only | Child's batches (read-only) |
+| Sessions | All (schedule) | Host + attendance | Join + view | View child's attendance |
+| Assignments | View all grades | Create + grade | Submit + view grade | View child's grades |
+| Certificates | Issue | View batch certs | Download own | View child's certs |
+| Complaints | Receive + respond | Submit | Submit | Submit |
+| Payments | Track revenue | Track earnings | View receipts | View receipts + pay |
+| WhatsApp | Manage groups | View assigned | Join link | Not visible |
+| Leaderboard | View all | View batch | See own rank | See child's rank |
 
 ### Shared Components Reused
-- `SecureJoinButton` -- same secure session join logic
-- `AttendanceTracker` -- same attendance UI
-- `WhatsAppGroupCard` -- same card, but without edit capability
-- `SessionCard` -- same session display
-- `SchoolSwitcher` -- same multi-school switcher in header
+- `SecureJoinButton` -- student joins sessions
+- `WhatsAppGroupCard` -- student sees join link (read-only)
+- `Badge`, `Card`, `Table`, `Tabs` -- consistent UI across all dashboards
+- Complaint types from `src/types/complaint.ts` -- shared across student, parent, and school owner
 
