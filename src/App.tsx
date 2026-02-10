@@ -33,6 +33,25 @@ import CourseLearningPage from "./pages/learn/CourseLearningPage";
 import MyCoursesPage from "./pages/learn/MyCoursesPage";
 import NotFound from "./pages/NotFound";
 
+// Student Dashboard
+import StudentLayout from "./components/student/StudentLayout";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentBatchesPage from "./pages/student/StudentBatchesPage";
+import StudentBatchDetailPage from "./pages/student/StudentBatchDetailPage";
+import StudentSessionsPage from "./pages/student/StudentSessionsPage";
+import StudentAssignmentsPage from "./pages/student/StudentAssignmentsPage";
+import StudentCertificatesPage from "./pages/student/StudentCertificatesPage";
+import StudentComplaintsPage from "./pages/student/StudentComplaintsPage";
+
+// Parent Dashboard
+import ParentLayout from "./components/parent/ParentLayout";
+import ParentDashboard from "./pages/parent/ParentDashboard";
+import ParentChildrenPage from "./pages/parent/ParentChildrenPage";
+import ParentAttendancePage from "./pages/parent/ParentAttendancePage";
+import ParentGradesPage from "./pages/parent/ParentGradesPage";
+import ParentPaymentsPage from "./pages/parent/ParentPaymentsPage";
+import ParentComplaintsPage from "./pages/parent/ParentComplaintsPage";
+
 // Instructor Dashboard
 import InstructorLayout from "./components/instructor/InstructorLayout";
 import InstructorDashboard from "./pages/instructor/InstructorDashboard";
@@ -95,7 +114,28 @@ const App = () => (
                 <Route path="profile" element={<InstructorProfilePage />} />
               </Route>
               
-              {/* Student Learning Routes */}
+              {/* Student Dashboard Routes */}
+              <Route path="/student" element={<StudentLayout />}>
+                <Route index element={<StudentDashboard />} />
+                <Route path="batches" element={<StudentBatchesPage />} />
+                <Route path="batch/:batchId" element={<StudentBatchDetailPage />} />
+                <Route path="sessions" element={<StudentSessionsPage />} />
+                <Route path="assignments" element={<StudentAssignmentsPage />} />
+                <Route path="certificates" element={<StudentCertificatesPage />} />
+                <Route path="complaints" element={<StudentComplaintsPage />} />
+              </Route>
+
+              {/* Parent Dashboard Routes */}
+              <Route path="/parent" element={<ParentLayout />}>
+                <Route index element={<ParentDashboard />} />
+                <Route path="children" element={<ParentChildrenPage />} />
+                <Route path="attendance" element={<ParentAttendancePage />} />
+                <Route path="grades" element={<ParentGradesPage />} />
+                <Route path="payments" element={<ParentPaymentsPage />} />
+                <Route path="complaints" element={<ParentComplaintsPage />} />
+              </Route>
+
+              {/* Legacy Student Routes - redirect to new dashboard */}
               <Route path="/my-courses" element={<MyCoursesPage />} />
               <Route path="/learn/:courseId/lesson/:lessonId" element={<CourseLearningPage />} />
               
