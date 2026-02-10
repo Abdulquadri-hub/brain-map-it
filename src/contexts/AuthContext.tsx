@@ -64,17 +64,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Simulate API call - replace with Inertia router.post
     await new Promise((resolve) => setTimeout(resolve, 1000));
     
-    // Mock user data - will come from usePage().props.auth.user
-    const mockUser: User = {
-      id: "1",
-      email,
-      name: "John Doe",
-      role: "instructor",
-      schools: [
-        { id: "1", name: "Bright Stars Academy", slug: "brightstars", role: "instructor" },
-        { id: "2", name: "Excel Learning Center", slug: "excel", role: "instructor" },
-      ],
-    };
+    // Mock user data - role determined by email prefix for demo
+    // In production: will come from usePage().props.auth.user
+    let mockUser: User;
+
+    if (email.includes("student")) {
+      mockUser = {
+        id: "s-1",
+        email,
+        name: "Chidera Okonkwo",
+        role: "student",
+        schools: [
+          { id: "1", name: "Bright Stars Academy", slug: "brightstars", role: "student" },
+        ],
+      };
+    } else if (email.includes("parent")) {
+      mockUser = {
+        id: "p-1",
+        email,
+        name: "Mrs. Ngozi Okonkwo",
+        role: "parent",
+        schools: [
+          { id: "1", name: "Bright Stars Academy", slug: "brightstars", role: "parent" },
+        ],
+      };
+    } else {
+      mockUser = {
+        id: "1",
+        email,
+        name: "John Doe",
+        role: "instructor",
+        schools: [
+          { id: "1", name: "Bright Stars Academy", slug: "brightstars", role: "instructor" },
+          { id: "2", name: "Excel Learning Center", slug: "excel", role: "instructor" },
+        ],
+      };
+    }
     setUser(mockUser);
     setIsLoading(false);
   };
